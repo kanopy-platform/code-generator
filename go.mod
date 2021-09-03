@@ -1,4 +1,4 @@
-module github.com/dskatz/generators
+module github.com/kanopy-platform/code-generator
 
 go 1.16
 
@@ -35,16 +35,12 @@ replace (
 )
 
 require (
-	github.com/10gen/kanopy v0.1.8
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.42.0
+	github.com/go-logr/logr v0.2.1-0.20200730175230-ee2de8da5be6 // indirect
+	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.0
-	helm.sh/helm/v3 v3.5.3
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
+	golang.org/x/mod v0.4.0 // indirect
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
+	golang.org/x/tools v0.1.0 // indirect
 	k8s.io/gengo v0.0.0-20200710205751-c0d492a0f3ca
 	k8s.io/klog/v2 v2.4.0
-	k8s.io/kube-aggregator v0.19.0
-	k8s.io/utils v0.0.0-20210305010621-2afb4311ab10
-	sigs.k8s.io/yaml v1.2.0
 )

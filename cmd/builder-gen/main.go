@@ -3,7 +3,7 @@ package main
 import (
 	"k8s.io/gengo/args"
 
-	"github.com/dskatz/generators/pkg/generators"
+	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
 )
