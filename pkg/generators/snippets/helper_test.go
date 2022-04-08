@@ -1,5 +1,5 @@
 /*
- Functions for _test.go files
+ Helper functions for _test.go files
 */
 
 package snippets
