@@ -1,3 +1,7 @@
+/*
+ Functions for _test.go files
+*/
+
 package snippets
 
 import (

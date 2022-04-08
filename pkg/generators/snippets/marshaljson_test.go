@@ -3,43 +3,41 @@ package snippets
 import (
 	"bytes"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
 )
 
-var ctx *generator.Context
-
-func TestMain(m *testing.M) {
-	var err error
-
-	ctx, err = newTestGeneratorContext()
-	if err != nil {
-		os.Exit(1)
-	}
-
-	os.Exit(m.Run())
-}
-
 func TestGenerateMarshalJSON(t *testing.T) {
 	t.Parallel()
 
+	ctx, err := newTestGeneratorContext()
+	require.NoError(t, err)
+
 	tests := []struct {
+		ctx                     *generator.Context
 		t                       *types.Type
 		embeddedTypePackageName string
 		wantErr                 error
 		want                    string
 	}{
 		{
-			// nil pointer
-			t:                       nil,
-			embeddedTypePackageName: "corev1",
-			wantErr:                 errors.New("nil pointer"),
+			// nil pointer ctx
+			ctx:     nil,
+			t:       newTestNamespaceType(),
+			wantErr: errors.New("nil pointer"),
 		},
 		{
+			// nil pointer t
+			ctx:     ctx,
+			t:       nil,
+			wantErr: errors.New("nil pointer"),
+		},
+		{
+			ctx:                     ctx,
 			t:                       newTestNamespaceType(),
 			embeddedTypePackageName: "corev1",
 			wantErr:                 nil,
@@ -55,7 +53,7 @@ return json.Marshal(o.Namespace)
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := GenerateMarshalJSON(ctx, test.t, test.embeddedTypePackageName, &b)
+		err := GenerateMarshalJSON(test.ctx, test.t, test.embeddedTypePackageName, &b)
 		if test.wantErr != nil {
 			assert.Error(t, err)
 		} else {
