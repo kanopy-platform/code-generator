@@ -53,7 +53,7 @@ return json.Marshal(o.Namespace)
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := GenerateMarshalJSON(test.ctx, test.t, test.embeddedTypePackageName, &b)
+		err := GenerateMarshalJSON(&b, test.ctx, test.t, test.embeddedTypePackageName)
 		if test.wantErr != nil {
 			assert.Error(t, err)
 		} else {

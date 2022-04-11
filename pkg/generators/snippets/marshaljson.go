@@ -8,14 +8,14 @@ import (
 	"k8s.io/gengo/types"
 )
 
-func GenerateMarshalJSON(ctx *generator.Context, t *types.Type, embeddedTypePackage string, w io.Writer) error {
+func GenerateMarshalJSON(w io.Writer, ctx *generator.Context, t *types.Type, schemeGroupVersionPackageAlias string) error {
 	if ctx == nil || t == nil {
 		return errors.New("nil pointer")
 	}
 
 	args := generator.Args{
 		"type":  t,
-		"alias": embeddedTypePackage,
+		"alias": schemeGroupVersionPackageAlias,
 	}
 
 	sw := generator.NewSnippetWriter(w, ctx, "$", "$")

@@ -8,7 +8,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
-func GenerateDeepCopyInto(ctx *generator.Context, t *types.Type, w io.Writer) error {
+func GenerateDeepCopyInto(w io.Writer, ctx *generator.Context, t *types.Type) error {
 	if ctx == nil || t == nil {
 		return errors.New("nil pointer")
 	}
@@ -27,7 +27,7 @@ func GenerateDeepCopyInto(ctx *generator.Context, t *types.Type, w io.Writer) er
 	return sw.Error()
 }
 
-func GenerateDeepCopy(ctx *generator.Context, t *types.Type, w io.Writer) error {
+func GenerateDeepCopy(w io.Writer, ctx *generator.Context, t *types.Type) error {
 	if ctx == nil || t == nil {
 		return errors.New("nil pointer")
 	}

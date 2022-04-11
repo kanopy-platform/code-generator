@@ -50,7 +50,7 @@ in.Namespace.DeepCopyInto(&out.Namespace)
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := GenerateDeepCopyInto(test.ctx, test.t, &b)
+		err := GenerateDeepCopyInto(&b, test.ctx, test.t)
 		if test.wantErr != nil {
 			assert.Error(t, err)
 		} else {
@@ -104,7 +104,7 @@ return out
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := GenerateDeepCopy(test.ctx, test.t, &b)
+		err := GenerateDeepCopy(&b, test.ctx, test.t)
 		if test.wantErr != nil {
 			assert.Error(t, err)
 		} else {
