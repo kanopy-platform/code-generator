@@ -43,9 +43,12 @@ func NewRootCommand(opts ...func(*rootCommand)) *cobra.Command {
 	}
 
 	flags := cmd.PersistentFlags()
+	customArgs := &generators.CustomArgs{}
 	flagLogLevel(flags)
-	flags.StringSliceP("bounding-dirs", "b", []string{}, "specify directories to bound the generation")
+	flags.StringSliceVar(&customArgs.BoundingDirs, "bounding-dirs", customArgs.BoundingDirs, "specify directories to bound the generation")
 	flagGeneratorArgs(flags, rootCommand.GeneratorArgs)
+
+	rootCommand.GeneratorArgs.CustomArgs = customArgs
 
 	return cmd
 }
