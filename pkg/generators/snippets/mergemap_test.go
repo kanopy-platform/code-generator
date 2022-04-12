@@ -32,16 +32,15 @@ func TestGenerateMergeMapStringString(t *testing.T) {
 			want: `// mergeMapStringString creates a new map and loads it from map args
 // This function takes a least 2 args. Later map args take precedence.
 func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) map[string]string {
-// populate initial map
 outMap := map[string]string{}
 for k, v := range m1 {
-	outMap[k] = v
+ outMap[k] = v
 }
-// iterate all args
+
 for _, m := range mapArgs {
-	for k, v := range m {
-		outMap[k] = v
-	}
+ for k, v := range m {
+  outMap[k] = v
+ }
 }
 return outMap
 }
