@@ -8,7 +8,7 @@ import (
 
 func GenerateMergeMapStringString(w io.Writer, ctx *generator.Context) error {
 	raw := `// mergeMapStringString creates a new map and loads it from map args
-// This function takes a least 2 args. Later map args take precedence.
+// This function takes at least 2 args. Later map args take precedence.
 func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) map[string]string {
 	outMap := map[string]string{}
 	for k, v := range m1 {
