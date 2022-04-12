@@ -9,7 +9,7 @@ import (
 )
 
 func GenerateMarshalJSON(w io.Writer, ctx *generator.Context, t *types.Type, schemeGroupVersionPackageAlias string) error {
-	if ctx == nil || t == nil {
+	if t == nil {
 		return errors.New("nil pointer")
 	}
 

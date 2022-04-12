@@ -9,7 +9,7 @@ import (
 )
 
 func GenerateDeepCopyInto(w io.Writer, ctx *generator.Context, t *types.Type) error {
-	if ctx == nil || t == nil {
+	if t == nil {
 		return errors.New("nil pointer")
 	}
 
@@ -27,7 +27,7 @@ func (in *$.type|raw$) DeepCopyInto(out *$.type|raw$) {
 }
 
 func GenerateDeepCopy(w io.Writer, ctx *generator.Context, t *types.Type) error {
-	if ctx == nil || t == nil {
+	if t == nil {
 		return errors.New("nil pointer")
 	}
 

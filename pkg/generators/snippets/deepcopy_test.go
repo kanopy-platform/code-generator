@@ -24,12 +24,6 @@ func TestGenerateDeepCopyInto(t *testing.T) {
 		want    string
 	}{
 		{
-			// nil pointer ctx
-			ctx:     nil,
-			t:       newTestNamespaceType(),
-			wantErr: errors.New("nil pointer"),
-		},
-		{
 			// nil pointer t
 			ctx:     ctx,
 			t:       nil,
@@ -72,12 +66,6 @@ func TestGenerateDeepCopy(t *testing.T) {
 		wantErr error
 		want    string
 	}{
-		{
-			// nil pointer ctx
-			ctx:     nil,
-			t:       newTestNamespaceType(),
-			wantErr: errors.New("nil pointer"),
-		},
 		{
 			// nil pointer t
 			ctx:     ctx,

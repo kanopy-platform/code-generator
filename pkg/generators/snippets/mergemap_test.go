@@ -2,7 +2,6 @@ package snippets
 
 import (
 	"bytes"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,11 +20,6 @@ func TestGenerateMergeMapStringString(t *testing.T) {
 		wantErr error
 		want    string
 	}{
-		{
-			// nil pointer ctx
-			ctx:     nil,
-			wantErr: errors.New("nil pointer"),
-		},
 		{
 			ctx:     ctx,
 			wantErr: nil,
