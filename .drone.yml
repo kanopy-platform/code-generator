@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-type: kubernetes
+type: docker
 name: default
 
 trigger:
@@ -15,10 +15,9 @@ volumes:
 
 steps:
   - name: test
-    image: golangci/golangci-lint:v1.45.2-alpine
+    image: golangci/golangci-lint:v1.45.2
     volumes:
       - name: cache
         path: /go
     commands:
-      - apk add make
       - make test
