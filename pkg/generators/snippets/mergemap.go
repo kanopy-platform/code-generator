@@ -12,25 +12,22 @@ func GenerateMergeMapStringString(w io.Writer, ctx *generator.Context) error {
 		return errors.New("nil pointer")
 	}
 
-	sw := generator.NewSnippetWriter(w, ctx, "$", "$")
+	raw := `// mergeMapStringString creates a new map and loads it from map args
+// This function takes a least 2 args. Later map args take precedence.
+func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) map[string]string {
+	outMap := map[string]string{}
+	for k, v := range m1 {
+		outMap[k] = v
+	}
 
-	sw.Do("// mergeMapStringString creates a new map and loads it from map args\n", nil)
-	sw.Do("// This function takes a least 2 args. Later map args take precedence.\n", nil)
-	sw.Do("func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) map[string]string {\n", nil)
+	for _, m := range mapArgs {
+		for k, v := range m {
+			outMap[k] = v
+		}
+	}
+	return outMap
+}
 
-	sw.Do("outMap := map[string]string{}\n", nil)
-	sw.Do("for k, v := range m1 {\n", nil)
-	sw.Do(" outMap[k] = v\n", nil)
-	sw.Do("}\n\n", nil)
-
-	sw.Do("for _, m := range mapArgs {\n", nil)
-	sw.Do(" for k, v := range m {\n", nil)
-	sw.Do("  outMap[k] = v\n", nil)
-	sw.Do(" }\n", nil)
-	sw.Do("}\n", nil)
-
-	sw.Do("return outMap\n", nil)
-	sw.Do("}\n\n", nil)
-
-	return sw.Error()
+`
+	return writeSnippet(w, ctx, raw)
 }
