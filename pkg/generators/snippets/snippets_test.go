@@ -56,7 +56,7 @@ func (o Namespace) MarshalJSON(in string) error {
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := writeSnippetWithArgs(&b, test.ctx, test.text, test.args)
+		err := writeSnippet(&b, test.ctx, test.text, test.args)
 		if test.wantErr != nil {
 			assert.Error(t, err)
 		} else {

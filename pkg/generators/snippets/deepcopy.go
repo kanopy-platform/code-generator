@@ -23,7 +23,7 @@ func (in *$.type|raw$) DeepCopyInto(out *$.type|raw$) {
 }
 
 `
-	return writeSnippetWithArgs(w, ctx, raw, args)
+	return writeSnippet(w, ctx, raw, args)
 }
 
 func GenerateDeepCopy(w io.Writer, ctx *generator.Context, t *types.Type) error {
@@ -46,5 +46,5 @@ func (in *$.type|raw$) DeepCopy() *$.type|raw$ {
 }
 
 `
-	return writeSnippetWithArgs(w, ctx, raw, args)
+	return writeSnippet(w, ctx, raw, args)
 }

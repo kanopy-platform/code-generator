@@ -7,11 +7,7 @@ import (
 	"k8s.io/gengo/generator"
 )
 
-func writeSnippet(w io.Writer, ctx *generator.Context, text string) error {
-	return writeSnippetWithArgs(w, ctx, text, nil)
-}
-
-func writeSnippetWithArgs(w io.Writer, ctx *generator.Context, text string, args generator.Args) error {
+func writeSnippet(w io.Writer, ctx *generator.Context, text string, args generator.Args) error {
 	if ctx == nil {
 		return errors.New("nil pointer")
 	}

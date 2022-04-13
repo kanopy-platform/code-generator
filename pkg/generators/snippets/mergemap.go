@@ -24,5 +24,5 @@ func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) ma
 }
 
 `
-	return writeSnippet(w, ctx, raw)
+	return writeSnippet(w, ctx, raw, nil)
 }
