@@ -10,7 +10,7 @@ import (
 	"k8s.io/gengo/generator"
 )
 
-func TestWriteSnippetWithArgs(t *testing.T) {
+func TestWriteSnippet(t *testing.T) {
 	t.Parallel()
 
 	ctx, err := newTestGeneratorContext()
