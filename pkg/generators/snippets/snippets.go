@@ -7,6 +7,12 @@ import (
 	"k8s.io/gengo/generator"
 )
 
+// writeSnippet uses NewSnipptetWriter to parse the input text and runs args through it.
+//
+// w is the destination
+// text is the templated text
+// args is used as a lookup for the template directives in text, typically a map or struct.
+//   Set args to nil if there are no template directives within text.
 func writeSnippet(w io.Writer, ctx *generator.Context, text string, args generator.Args) error {
 	if ctx == nil {
 		return errors.New("nil pointer")
