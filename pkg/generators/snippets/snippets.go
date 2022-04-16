@@ -7,7 +7,7 @@ import (
 	"k8s.io/gengo/generator"
 )
 
-// writeSnippet uses NewSnipptetWriter to parse the input text and runs args through it.
+// writeSnippet uses NewSnippetWriter to parse the input text and runs args through it.
 //
 // w is the destination
 // text is the templated text
