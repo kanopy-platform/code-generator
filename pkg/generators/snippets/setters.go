@@ -23,7 +23,7 @@ func GenerateSetter(w io.Writer, ctx *generator.Context, root *types.Type, membe
 	}
 
 	if embedded != nil {
-		args["embeddedType"] = embedded
+		args["embeddedTypeName"] = embedded.Name.Name
 	}
 
 	assignment := "o.$.memberName$"
@@ -38,11 +38,12 @@ func GenerateSetter(w io.Writer, ctx *generator.Context, root *types.Type, membe
 		sb.WriteString("func (o *$.type|raw$) $.funcName$(in $.memberType|raw$) *$.type|raw$ {\n")
 		sb.WriteString(fmt.Sprintf("%s = mergeMapStringString(%s, in)\n", assignment, assignment))
 	} else if member.Type.Kind == types.Slice {
-		sb.WriteString("func (o *$.type|raw$) $.funcName$(in ...$.memberType|raw$) *$.type|raw$ {\n")
+		args["memberElemType"] = member.Type.Elem
+		sb.WriteString("func (o *$.type|raw$) $.funcName$(in ...$.memberElemType|raw$) *$.type|raw$ {\n")
 		if embedded != nil {
 			// needs translation from struct to pull out the embeddedType
-			sb.WriteString("for _, i := range in {\n")
-			sb.WriteString(fmt.Sprintf("%s = append(%s, i.$.embeddedType|raw$)\n", assignment, assignment))
+			sb.WriteString("for _, elem := range in {\n")
+			sb.WriteString(fmt.Sprintf("%s = append(%s, elem.$.embeddedTypeName$)\n", assignment, assignment))
 			sb.WriteString("}\n")
 		} else {
 			sb.WriteString(fmt.Sprintf("%s = append(%s, in...)\n", assignment, assignment))
@@ -51,7 +52,7 @@ func GenerateSetter(w io.Writer, ctx *generator.Context, root *types.Type, membe
 		sb.WriteString("func (o *$.type|raw$) $.funcName$(in $.memberType|raw$) *$.type|raw$ {\n")
 		if embedded != nil {
 			// needs translation from struct to pull out the embeddedType
-			sb.WriteString(fmt.Sprintf("%s = in.$.embeddedType|raw$\n", assignment))
+			sb.WriteString(fmt.Sprintf("%s = in.$.embeddedTypeName$\n", assignment))
 		} else {
 			sb.WriteString(fmt.Sprintf("%s = in\n", assignment))
 		}

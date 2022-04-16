@@ -13,6 +13,8 @@ import (
 
 const packageName string = "./k8s"
 
+/* Functions for creating the generator.Context with appropriate NameSystems.
+ */
 func nameSystem() namer.NameSystems {
 	return namer.NameSystems{
 		"public": namer.NewPublicNamer(1),
@@ -40,27 +42,23 @@ func newTestGeneratorContext() (*generator.Context, error) {
 	return c, nil
 }
 
+/* Functions that return mock k8s wrapper types which needs code generation.
+ */
 func newTestNamespaceType() *types.Type {
 	return &types.Type{
 		Name: types.Name{
 			Package: packageName,
 			Name:    "Namespace",
 		},
-		Kind:                      types.Struct,
-		CommentLines:              []string{"+kanopy:builder=true"},
-		SecondClosestCommentLines: []string{},
+		Kind:         types.Struct,
+		CommentLines: []string{"+kanopy:builder=true"},
 		Members: []types.Member{
 			{
-				Name:     "Namespace",
+				//Name:     "Namespace",
 				Embedded: true,
 				Type:     newTestEmbeddedNamespaceType(),
 			},
 		},
-		Elem:       nil,
-		Key:        nil,
-		Underlying: nil,
-		Methods:    map[string]*types.Type{},
-		Signature:  nil,
 	}
 }
 
@@ -75,14 +73,31 @@ func newTestEmbeddedNamespaceType() *types.Type {
 			Package: "k8s.io/api/core/v1",
 			Name:    "Namespace",
 		},
+		Kind: types.Struct,
+		Members: []types.Member{
+			{
+				//Name:     "ObjectMeta",
+				Embedded: true,
+				Type:     newTestObjectMetaType(),
+			},
+		},
+	}
+}
+
+func newTestDeploymentType() *types.Type {
+	return &types.Type{
+		Name: types.Name{
+			Package: packageName,
+			Name:    "Deployment",
+		},
 		Kind:                      types.Struct,
-		CommentLines:              []string{},
+		CommentLines:              []string{"+kanopy:builder=true"},
 		SecondClosestCommentLines: []string{},
 		Members: []types.Member{
 			{
-				Name:     "ObjectMeta",
+				//Name:     "Deployment",
 				Embedded: true,
-				Type:     newTestObjectMetaType(),
+				Type:     newTestEmbeddedDeploymentType(),
 			},
 		},
 		Elem:       nil,
@@ -93,11 +108,26 @@ func newTestEmbeddedNamespaceType() *types.Type {
 	}
 }
 
+func newTestEmbeddedDeploymentType() *types.Type {
+	return &types.Type{
+		Name: types.Name{
+			Package: "k8s.io/api/apps/v1",
+			Name:    "Deployment",
+		},
+		Kind:    types.Struct,
+		Members: []types.Member{},
+	}
+}
+
 const (
 	// make sure numbers match the index of the Members array below
-	objectMetaNameMember   = 0
-	objectMetaLabelsMember = 1
-	objectMetaIntptrMember = 2
+	objectMetaNameMember         = 0
+	objectMetaLabelsMember       = 1
+	objectMetaDeploymentsMember  = 2
+	objectMetaStringsMember      = 3
+	objectMetaDeploymentMember   = 4
+	objectMetaSimpleStructMember = 5
+	objectMetaIntPtrMember       = 6
 )
 
 func newTestObjectMetaType() *types.Type {
@@ -106,31 +136,48 @@ func newTestObjectMetaType() *types.Type {
 			Package: "k8s.io/apimachinery/pkg/apis/meta/v1",
 			Name:    "ObjectMeta",
 		},
-		Kind:                      types.Struct,
-		CommentLines:              []string{},
-		SecondClosestCommentLines: []string{},
+		Kind: types.Struct,
 		Members: []types.Member{
 			{
+				// Name -> string
 				Name: "Name",
 				Type: newTestStringType(),
 			},
 			{
+				// Labels -> map[string]string
 				Name: "Labels",
-				Type: newMapStringStringType(),
+				Type: newTestMapStringStringType(),
 			},
 			{
-				Name: "Intptr",
-				Type: newIntptrType(),
+				// Deployments -> []Deployment
+				Name: "Deployments",
+				Type: newTestDeploymentSliceType(),
+			},
+			{
+				// Strings -> []string
+				Name: "Strings",
+				Type: newTestStringSliceType(),
+			},
+			{
+				// Deployment -> Deployment struct
+				Name: "Deployment",
+				Type: newTestDeploymentType(),
+			},
+			{
+				// SimpleStruct -> struct
+				Name: "SimpleStruct",
+				Type: newTestSimpleStructType(),
+			},
+			{
+				Name: "IntPtr",
+				Type: newTestIntPtrType(),
 			},
 		},
-		Elem:       nil,
-		Key:        nil,
-		Underlying: nil,
-		Methods:    map[string]*types.Type{},
-		Signature:  nil,
 	}
 }
 
+/* Functions that return mock basic and complex types used by the types above
+ */
 func newTestIntType() *types.Type {
 	return &types.Type{
 		Name: types.Name{
@@ -151,7 +198,29 @@ func newTestStringType() *types.Type {
 	}
 }
 
-func newMapStringStringType() *types.Type {
+func newTestStringSliceType() *types.Type {
+	return &types.Type{
+		Name: types.Name{
+			Package: "",
+			Name:    "[]string",
+		},
+		Kind: types.Slice,
+		Elem: newTestStringType(),
+	}
+}
+
+func newTestDeploymentSliceType() *types.Type {
+	return &types.Type{
+		Name: types.Name{
+			Package: "",
+			Name:    "[]Deployment",
+		},
+		Kind: types.Slice,
+		Elem: newTestDeploymentType(),
+	}
+}
+
+func newTestMapStringStringType() *types.Type {
 	return &types.Type{
 		Name: types.Name{
 			Package: "",
@@ -163,7 +232,7 @@ func newMapStringStringType() *types.Type {
 	}
 }
 
-func newIntptrType() *types.Type {
+func newTestIntPtrType() *types.Type {
 	return &types.Type{
 		Name: types.Name{
 			Package: "",
@@ -171,5 +240,21 @@ func newIntptrType() *types.Type {
 		},
 		Kind: types.Pointer,
 		Elem: newTestIntType(),
+	}
+}
+
+func newTestSimpleStructType() *types.Type {
+	return &types.Type{
+		Name: types.Name{
+			Package: packageName,
+			Name:    "SimpleStruct",
+		},
+		Kind: types.Struct,
+		Members: []types.Member{
+			{
+				Name: "Description",
+				Type: newTestStringType(),
+			},
+		},
 	}
 }
