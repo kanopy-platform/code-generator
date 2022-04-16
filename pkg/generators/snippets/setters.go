@@ -68,7 +68,7 @@ func GenerateSetter(w io.Writer, ctx *generator.Context, root *types.Type, membe
 	sb.WriteString("return o\n")
 	sb.WriteString("}\n\n")
 
-	return writeSnippet(w, ctx, sb.String(), args)
+	return writeSnippetWithArgs(w, ctx, sb.String(), args)
 }
 
 func funcName(m types.Member) string {

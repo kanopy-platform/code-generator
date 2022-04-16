@@ -25,5 +25,5 @@ func New$.type|raw$(name string) *$.type|raw$ {
 }
 
 `
-	return writeSnippet(w, ctx, raw, args)
+	return writeSnippetWithArgs(w, ctx, raw, args)
 }

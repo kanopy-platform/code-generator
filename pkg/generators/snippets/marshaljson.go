@@ -25,5 +25,5 @@ func (o $.type|raw$) MarshalJSON() ([]byte, error) {
 }
 
 `
-	return writeSnippet(w, ctx, raw, args)
+	return writeSnippetWithArgs(w, ctx, raw, args)
 }
