@@ -32,22 +32,22 @@ func TestWriteSnippetWithArgs(t *testing.T) {
 			ctx: ctx,
 			text: `// Test Comment
 func (o $.type|raw$) MarshalJSON(in $.inputType$) $.returnType$ {
-	o.Namespace.TypeMeta = metav1.TypeMeta{Kind: "$.type|raw$", APIVersion: $.alias$.SchemeGroupVersion.String()}
+	o.$.type|raw$.TypeMeta = metav1.TypeMeta{Kind: "$.type|raw$", APIVersion: $.alias$.SchemeGroupVersion.String()}
 	return json.Marshal(o.$.type|raw$)
 }
 
 `,
 			args: generator.Args{
-				"type":       newTestNamespaceType(),
+				"type":       newSampleTestType(t, "TestStruct"),
 				"alias":      "corev1",
 				"inputType":  "string",
 				"returnType": "error",
 			},
 			wantErr: nil,
 			want: `// Test Comment
-func (o Namespace) MarshalJSON(in string) error {
-	o.Namespace.TypeMeta = metav1.TypeMeta{Kind: "Namespace", APIVersion: corev1.SchemeGroupVersion.String()}
-	return json.Marshal(o.Namespace)
+func (o TestStruct) MarshalJSON(in string) error {
+	o.TestStruct.TypeMeta = metav1.TypeMeta{Kind: "TestStruct", APIVersion: corev1.SchemeGroupVersion.String()}
+	return json.Marshal(o.TestStruct)
 }
 
 `,
