@@ -5,6 +5,10 @@
 package snippets
 
 import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -40,6 +44,21 @@ func newTestGeneratorContext() (*generator.Context, error) {
 	}
 
 	return c, nil
+}
+
+func newSampleBuilderType(t *testing.T, selector string) *types.Type {
+	dir := "./testdata/a"
+	d := args.Default()
+	d.IncludeTestFiles = true
+	d.InputDirs = []string{dir + "/..."}
+	b, err := d.NewBuilder()
+	assert.NoError(t, err)
+	findTypes, err := b.FindTypes()
+	assert.NoError(t, err)
+	n := findTypes[dir].Types[selector]
+	fmt.Println(findTypes, n.Members)
+	assert.NotNil(t, n)
+	return n
 }
 
 /* Functions that return mock k8s wrapper types which needs code generation.
