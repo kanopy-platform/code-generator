@@ -127,10 +127,10 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
 	sw.Do("//auto generated\n", nil)
-	if b.hasTypeMetaEmbedded(t) {
-		parentTypeOfTypeMeta, typeMeta := b.getParentOfTypeMeta(t)
+	if hasTypeMetaEmbedded(t) {
+		parentTypeOfTypeMeta := getParentOfTypeMeta(t)
 		b.imports.AddType(parentTypeOfTypeMeta)
-		b.imports.AddType(typeMeta)
+		b.imports.AddType(getTypeMetaFromType(parentTypeOfTypeMeta))
 		sw.Do(snippets.GenerateDeepCopy(t))
 		sw.Do(snippets.GenerateMarshalJSON(t, b.imports.LocalNameOf(parentTypeOfTypeMeta.Name.Package)))
 	}
@@ -162,24 +162,31 @@ func combineTypeComments(t *types.Type) []string {
 	return append(append([]string{}, t.SecondClosestCommentLines...), t.CommentLines...)
 }
 
-func (b *BuilderPatternGenerator) hasTypeMetaEmbedded(t *types.Type) bool {
-	if p, _ := b.getParentOfTypeMeta(t); p != nil {
+func hasTypeMetaEmbedded(t *types.Type) bool {
+	if p := getParentOfTypeMeta(t); p != nil {
 		return true
 	}
 	return false
 }
 
-func (b *BuilderPatternGenerator) getParentOfTypeMeta(t *types.Type) (*types.Type, *types.Type) {
+func getParentOfTypeMeta(t *types.Type) *types.Type {
 	for _, m := range t.Members {
 		if m.Embedded {
-			for _, mm := range m.Type.Members {
-				if mm.Name == "TypeMeta" {
-					return m.Type, mm.Type
-				}
+			if mm := getTypeMetaFromType(m.Type); mm != nil {
+				return m.Type
 			}
 		}
 	}
-	return nil, nil
+	return nil
+}
+
+func getTypeMetaFromType(t *types.Type) *types.Type {
+	for _, mm := range t.Members {
+		if mm.Name == "TypeMeta" {
+			return mm.Type
+		}
+	}
+	return nil
 }
 
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {

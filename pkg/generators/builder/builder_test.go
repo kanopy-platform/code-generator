@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,53 +33,60 @@ func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Pac
 	return pkg, n
 }
 
-func TestBuilderPatternGenerator_TypeDoesNotNeedGeneration(t *testing.T) {
-	b := &BuilderPatternGeneratorFactory{}
-	pkg, typeToGenerate := newTestGeneratorType(t, "a", "NoGeneration")
-	g := b.NewBuilder(pkg, "")
-	buf := &bytes.Buffer{}
-	assert.NoError(t, g.GenerateType(&generator.Context{}, typeToGenerate, buf))
-	assert.Empty(t, buf)
-}
-
-func TestBuilderPatternGenerator_TypeNeedsGeneration(t *testing.T) {
-	b := &BuilderPatternGeneratorFactory{}
-	pkg, typeToGenerate := newTestGeneratorType(t, "a", "AStruct")
-	g := b.NewBuilder(pkg, tagName)
-	buf := &bytes.Buffer{}
-	err := g.GenerateType(&generator.Context{}, typeToGenerate, buf)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, buf)
-}
-
-func TestBuilderPatternGenerator_AllPackageTypesNeedGeneration(t *testing.T) {
-	b := &BuilderPatternGeneratorFactory{}
-	pkg, typeToGenerate := newTestGeneratorType(t, "b", "BStruct")
-	g := b.NewBuilder(pkg, tagName)
-	buf := &bytes.Buffer{}
+func newGeneratorContext(g generator.Generator) *generator.Context {
 	c := &generator.Context{}
 	c.Namers = g.Namers(c)
-	err := g.GenerateType(c, typeToGenerate, buf)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, buf)
+	return c
 }
 
-func TestBuilderPatternGenerator_AllTypesInPackageWithTypeOptout(t *testing.T) {
-	b := &BuilderPatternGeneratorFactory{}
-	pkg, typeToGenerate := newTestGeneratorType(t, "b", "OptOutStruct")
-	g := b.NewBuilder(pkg, tagName)
-	buf := &bytes.Buffer{}
-	c := &generator.Context{}
-	c.Namers = g.Namers(c)
-	err := g.GenerateType(c, typeToGenerate, buf)
-	assert.NoError(t, err)
-	assert.Empty(t, buf)
-}
+func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
+	tests := []struct {
+		description string
+		dir         string
+		structName  string
+		wantEmpty   bool
+	}{
+		{
+			description: "Types do not need generation",
+			dir:         "a",
+			structName:  "NoGeneration",
+			wantEmpty:   true,
+		},
+		{
+			description: "Types need generation",
+			dir:         "a",
+			structName:  "AStruct",
+		},
+		{
+			description: "All package types need generation",
+			dir:         "b",
+			structName:  "BStruct",
+		},
+		{
+			description: "Type generation opt-out",
+			dir:         "b",
+			structName:  "OptOutStruct",
+			wantEmpty:   true,
+		},
+	}
 
+	for _, test := range tests {
+		b := &BuilderPatternGeneratorFactory{}
+		pkg, typeToGenerate := newTestGeneratorType(t, test.dir, test.structName)
+		g := b.NewBuilder(pkg, tagName)
+		buf := &bytes.Buffer{}
+		c := newGeneratorContext(g)
+		assert.NoError(t, g.GenerateType(c, typeToGenerate, buf), test.description)
+		if test.wantEmpty {
+			assert.Empty(t, buf, test.description)
+		} else {
+			assert.NotEmpty(t, buf, test.description)
+		}
+	}
+}
 func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
 	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	g := &BuilderPatternGenerator{}
-	assert.True(t, g.hasTypeMetaEmbedded(typeToGenerate))
+	assert.True(t, hasTypeMetaEmbedded(typeToGenerate))
 }
 
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
@@ -95,15 +103,26 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	g := b.NewBuilder(pkg, tagName)
 	buf := &bytes.Buffer{}
-	c := &generator.Context{}
-	c.Namers = g.Namers(c)
-	err := g.GenerateType(c, typeToGenerate, buf)
-	assert.NoError(t, err)
+	c := newGeneratorContext(g)
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	assert.Contains(t, buf.String(), "func (o CDeployment) MarshalJSON()")
-	assert.Contains(t, buf.String(), "func (o CDeployment) MarshalJSON()")
 	assert.Contains(t, buf.String(), "d.SchemeGroupVersion")
+}
+
+func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
+	g := b.NewBuilder(pkg, tagName)
+	c := newGeneratorContext(g)
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
+
+	imports := g.Imports(c)
+	assert.Len(t, imports, 2)
+	assert.Contains(t, strings.Join(imports, ""), "cmeta")
+	assert.Contains(t, strings.Join(imports, ""), "cd")
+
 }
 
 func TestBuilderPattern_GenerateInit(t *testing.T) {

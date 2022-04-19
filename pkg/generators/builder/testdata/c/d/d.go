@@ -1,10 +1,9 @@
 package d
 
-// mock TypeMeta
-type TypeMeta struct {
-	Name string
-}
+import (
+	"github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/c/meta"
+)
 
 type MockDeployment struct {
-	TypeMeta
+	meta.TypeMeta
 }
