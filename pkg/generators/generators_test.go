@@ -10,23 +10,39 @@ import (
 	"k8s.io/gengo/types"
 )
 
-func TestExtractTag_ValueFromComments(t *testing.T) {
+func TestExtractCommentTag(t *testing.T) {
 	tag := "test:tag"
-	comments := []string{fmt.Sprintf("+%s=value", tag)}
-	expected := "value"
-	assert.Equal(t, expected, extractTag(tag, comments))
-}
+	fmtTag := "+%s=%s"
+	tests := []struct {
+		description string
+		comments    []string
+		want        string
+	}{
+		{
+			description: "Empty value from no comments",
+			comments:    []string{},
+			want:        "",
+		},
+		{
+			description: "Empty value from empty comments",
+			comments:    []string{""},
+			want:        "",
+		},
+		{
+			description: "Value from comments",
+			comments:    []string{fmt.Sprintf(fmtTag, tag, "value")},
+			want:        "value",
+		},
+		{
+			description: "Return first value with multiple values",
+			comments:    []string{fmt.Sprintf(fmtTag, tag, "value,value2")},
+			want:        "value",
+		},
+	}
 
-func TestExtracTag_ValueFromEmptyComments(t *testing.T) {
-	tag := "test:tag"
-	expected := ""
-	assert.Equal(t, expected, extractTag(tag, []string{""}))
-}
-
-func TestExtractTag_ReturnFirstValueWithMultipleValues(t *testing.T) {
-	tag := "test:tag"
-	comments := []string{fmt.Sprintf("+%s=value,value2", tag)}
-	assert.Equal(t, "value", extractTag(tag, comments))
+	for _, test := range tests {
+		assert.Equal(t, test.want, extractTag(tag, test.comments), test.description)
+	}
 }
 
 func TestNewGenerators(t *testing.T) {
@@ -41,40 +57,49 @@ func TestNewGenerator_WithBoilerplate(t *testing.T) {
 	assert.Equal(t, expected, g.Boilerplate)
 }
 
-func TestPackages_NoPackagesNeedGeneration(t *testing.T) {
-	ctx := generator.Context{}
-	args := args.GeneratorArgs{}
-	g := New(&MockBuilderFactory{})
-	packages := g.Packages(&ctx, &args)
-	assert.Empty(t, packages)
-}
+func TestPackages_Generation(t *testing.T) {
+	tests := []struct {
+		description  string
+		testInputDir string
+		want         int
+	}{
+		{
+			description:  "All defaults",
+			testInputDir: "",
+			want:         0,
+		},
+		{
+			description:  "One package needs generation",
+			testInputDir: "./testdata/a/...",
+			want:         1,
+		},
+		{
+			description:  "Empty dir",
+			testInputDir: "./testdata/b/...",
+			want:         0,
+		},
+		{
+			description:  "Single type in package needs generation",
+			testInputDir: "./testdata/c/...",
+			want:         1,
+		},
+		{
+			description:  "Types do not need generation",
+			testInputDir: "./testdata/d/...",
+			want:         0,
+		},
+	}
 
-func TestPackages_NeedsGeneration(t *testing.T) {
-	a, ctx := testDataGeneratorSetup(t, "./testdata/a/...")
-	g := New(&MockBuilderFactory{})
-	packages := g.Packages(ctx, a)
-	assert.Len(t, packages, 1)
-}
-
-func TestPackages_SingleTypeNeedsGeneration(t *testing.T) {
-	a, ctx := testDataGeneratorSetup(t, "./testdata/c/...")
-	g := New(&MockBuilderFactory{})
-	packages := g.Packages(ctx, a)
-	assert.Len(t, packages, 1)
-}
-
-func TestPackages_EmptyDir(t *testing.T) {
-	a, ctx := testDataGeneratorSetup(t, "./testdata/b/...")
-	g := New(&MockBuilderFactory{})
-	packages := g.Packages(ctx, a)
-	assert.Len(t, packages, 0)
-}
-
-func TestPackages_TypesDoNotNeedGeneration(t *testing.T) {
-	a, ctx := testDataGeneratorSetup(t, "./testdata/d/...")
-	g := New(&MockBuilderFactory{})
-	packages := g.Packages(ctx, a)
-	assert.Len(t, packages, 0)
+	for _, test := range tests {
+		ctx := &generator.Context{}
+		a := &args.GeneratorArgs{}
+		g := New(&MockBuilderFactory{})
+		if test.testInputDir != "" {
+			a, ctx = testDataGeneratorSetup(t, test.testInputDir)
+		}
+		packages := g.Packages(ctx, a)
+		assert.Len(t, packages, test.want, test.description)
+	}
 }
 
 func TestPackage_FilterPackageIncluded(t *testing.T) {
@@ -107,7 +132,7 @@ func testDataGeneratorSetup(t *testing.T, dir string) (*args.GeneratorArgs, *gen
 	b, err := a.NewBuilder()
 	assert.NoError(t, err)
 
-	ctx, err := generator.NewContext(b, NameSystems(), DefaultNameSystem())
+	ctx, err := generator.NewContext(b, NameSystems(), DefaultNameSystem)
 	assert.NoError(t, err)
 	return a, ctx
 }

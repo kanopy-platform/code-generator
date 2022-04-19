@@ -14,8 +14,9 @@ type BuilderFactory interface {
 }
 
 const (
-	tagName         = "kanopy:builder"
-	tagValuePackage = "package"
+	DefaultNameSystem = "public"
+	tagName           = "kanopy:builder"
+	tagValuePackage   = "package"
 )
 
 // NameSystems returns the name system used by the generators in this package.
@@ -25,10 +26,6 @@ func NameSystems() namer.NameSystems {
 		"public": namer.NewPublicNamer(prependPackageNames),
 		"raw":    namer.NewRawNamer("", nil),
 	}
-}
-
-func DefaultNameSystem() string {
-	return "public"
 }
 
 type Generators struct {
@@ -111,6 +108,5 @@ func extractTag(tag string, comments []string) string {
 }
 
 func getFirstTagValue(values ...string) string {
-	parts := strings.Split(values[0], ",")
-	return parts[0]
+	return strings.Split(values[0], ",")[0]
 }

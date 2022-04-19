@@ -65,7 +65,7 @@ func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
 	g := generators.New(&builder.DefaultBuilderFactory{})
 	return r.GeneratorArgs.Execute(
 		generators.NameSystems(),
-		generators.DefaultNameSystem(),
+		generators.DefaultNameSystem,
 		g.Packages,
 	)
 }
