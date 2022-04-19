@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/kanopy-platform/code-generator/pkg/generators"
+	"github.com/kanopy-platform/code-generator/pkg/generators/builder"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -61,11 +62,11 @@ func (r *rootCommand) prerun(cmd *cobra.Command, args []string) error {
 }
 
 func (r *rootCommand) runE(cmd *cobra.Command, args []string) error {
-
+	g := generators.New(&builder.DefaultBuilderFactory{})
 	return r.GeneratorArgs.Execute(
 		generators.NameSystems(),
-		generators.DefaultNameSystem(),
-		generators.Packages,
+		generators.DefaultNameSystem,
+		g.Packages,
 	)
 }
 
