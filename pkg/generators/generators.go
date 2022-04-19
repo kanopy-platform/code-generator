@@ -10,7 +10,7 @@ import (
 )
 
 type BuilderFactory interface {
-	NewBuilder(outfileBaseName string, pkg *types.Package, tagValue string) generator.Generator
+	NewBuilder(outfileBaseName string, pkg *types.Package, tagName string) generator.Generator
 }
 
 const (
