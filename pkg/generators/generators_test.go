@@ -102,17 +102,31 @@ func TestPackages_Generation(t *testing.T) {
 	}
 }
 
-func TestPackage_FilterPackageIncluded(t *testing.T) {
+func TestPackage_FilterPackage(t *testing.T) {
 	_, ctx := testDataGeneratorSetup(t, "./testdata/d/...")
-	p := &types.Package{
-		Path: "testme",
+
+	tests := []struct {
+		description string
+		pkg         *types.Package
+		name        types.Name
+		want        bool
+	}{
+		{
+			description: "package included",
+			pkg:         &types.Package{Path: "testme"},
+			name:        types.Name{Package: "testme"},
+			want:        true,
+		},
+		{
+			description: "package excluded",
+			pkg:         &types.Package{Path: "excludeme"},
+			name:        types.Name{Package: "testme"},
+		},
 	}
 
-	assert.True(t, filterFuncByPackagePath(p)(ctx, &types.Type{
-		Name: types.Name{
-			Package: "testme",
-		},
-	}))
+	for _, test := range tests {
+		assert.Equal(t, test.want, filterFuncByPackagePath(test.pkg)(ctx, &types.Type{Name: test.name}), test.description)
+	}
 }
 
 func TestPackage_GeneratorFuncForPackage(t *testing.T) {
