@@ -3,6 +3,7 @@ package generators
 import (
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -10,7 +11,7 @@ import (
 )
 
 type BuilderFactory interface {
-	NewBuilder(outfileBaseName string, pkg *types.Package, tagName string) generator.Generator
+	NewBuilder(pkg *types.Package, tagName string) generator.Generator
 }
 
 const (
@@ -53,12 +54,13 @@ func (g *Generators) Packages(context *generator.Context, arguments *args.Genera
 		pkg := context.Universe[v]
 		tagValue := extractTag(tagName, pkg.Comments)
 		if doesPackageNeedGeneration(tagValue) || doPackageTypesNeedGeneration(pkg) {
+			log.Infof("Package: %s marked for generation.", pkg.Name)
 			packages = append(packages, &generator.DefaultPackage{
 				PackageName:   pkg.Name,
 				PackagePath:   pkg.Path,
 				HeaderText:    []byte(g.Boilerplate),
 				FilterFunc:    filterFuncByPackagePath(pkg),
-				GeneratorFunc: g.generatorFuncForPackage(arguments.OutputFileBaseName, pkg, tagValue),
+				GeneratorFunc: g.generatorFuncForPackage(pkg),
 			})
 		}
 	}
@@ -72,10 +74,10 @@ func filterFuncByPackagePath(pkg *types.Package) func(c *generator.Context, t *t
 	}
 }
 
-func (g *Generators) generatorFuncForPackage(baseName string, pkg *types.Package, tagValue string) func(c *generator.Context) []generator.Generator {
+func (g *Generators) generatorFuncForPackage(pkg *types.Package) func(c *generator.Context) []generator.Generator {
 	return func(c *generator.Context) []generator.Generator {
 		return []generator.Generator{
-			g.Builder.NewBuilder(baseName, pkg, tagValue),
+			g.Builder.NewBuilder(pkg, tagName),
 		}
 	}
 }

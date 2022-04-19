@@ -1,18 +1,11 @@
 package snippets
 
 import (
-	"errors"
-	"io"
-
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
 )
 
-func GenerateMarshalJSON(w io.Writer, ctx *generator.Context, t *types.Type, schemeGroupVersionPackageAlias string) error {
-	if t == nil {
-		return errors.New("nil pointer")
-	}
-
+func GenerateMarshalJSON(t *types.Type, schemeGroupVersionPackageAlias string) (string, generator.Args) {
 	args := generator.Args{
 		"type":  t,
 		"alias": schemeGroupVersionPackageAlias,
@@ -25,5 +18,5 @@ func (o $.type|raw$) MarshalJSON() ([]byte, error) {
 }
 
 `
-	return writeSnippetWithArgs(w, ctx, raw, args)
+	return raw, args
 }

@@ -135,7 +135,7 @@ func TestPackage_GeneratorFuncForPackage(t *testing.T) {
 		Path: "testme",
 	}
 	g := New(&MockBuilderFactory{})
-	assert.Len(t, g.generatorFuncForPackage("base", p, "true")(ctx), 1)
+	assert.Len(t, g.generatorFuncForPackage(p)(ctx), 1)
 }
 
 func testDataGeneratorSetup(t *testing.T, dir string) (*args.GeneratorArgs, *generator.Context) {
@@ -155,6 +155,6 @@ type MockBuilderFactory struct {
 	generator.DefaultGen
 }
 
-func (m *MockBuilderFactory) NewBuilder(outputFileBaseName string, pkg *types.Package, tagValue string) generator.Generator {
+func (m *MockBuilderFactory) NewBuilder(pkg *types.Package, tagValue string) generator.Generator {
 	return m
 }
