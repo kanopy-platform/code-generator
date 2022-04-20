@@ -13,8 +13,6 @@ import (
 	"k8s.io/gengo/types"
 )
 
-const tagName = "kanopy:builder"
-
 func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Package, *types.Type) {
 	testDir := fmt.Sprintf("./testdata/%s", dir)
 	d := args.Default()
@@ -73,7 +71,7 @@ func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
 	for _, test := range tests {
 		b := &BuilderPatternGeneratorFactory{}
 		pkg, typeToGenerate := newTestGeneratorType(t, test.dir, test.structName)
-		g := b.NewBuilder(pkg, tagName)
+		g := b.NewBuilder(pkg)
 		buf := &bytes.Buffer{}
 		c := newGeneratorContext(g)
 		assert.NoError(t, g.GenerateType(c, typeToGenerate, buf), test.description)
@@ -101,7 +99,7 @@ func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg, tagName)
+	g := b.NewBuilder(pkg)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
@@ -114,7 +112,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg, tagName)
+	g := b.NewBuilder(pkg)
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
@@ -128,7 +126,7 @@ func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
 func TestBuilderPattern_GenerateInit(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, _ := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg, tagName)
+	g := b.NewBuilder(pkg)
 	buf := &bytes.Buffer{}
 	c := &generator.Context{}
 	c.Namers = g.Namers(c)

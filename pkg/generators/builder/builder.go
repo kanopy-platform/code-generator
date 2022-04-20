@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets"
+	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 
@@ -15,7 +16,6 @@ import (
 
 type BuilderPatternGenerator struct {
 	generator.DefaultGen
-	tagName    string
 	pkgToBuild *types.Package
 	allTypes   bool
 	imports    namer.ImportTracker
@@ -25,20 +25,20 @@ type BuilderPatternGeneratorFactory struct {
 	OutputFileBaseName string
 }
 
-func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, tagName string) generator.Generator {
+func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generator.Generator {
 	return &BuilderPatternGenerator{
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
-		tagName:    tagName,
 		pkgToBuild: pkg,
-		allTypes:   allTypes(tagName, pkg),
+		allTypes:   allTypes(pkg),
 		imports:    newImportTracker(),
 	}
 }
 
-func allTypes(tagName string, pkg *types.Package) bool {
-	return doesPackageNeedGeneration(extractTag(tagName, pkg.Comments))
+func allTypes(pkg *types.Package) bool {
+	return tags.IsPackageTagged(tags.Extract(pkg.Comments))
+	//return doesPackageNeedGeneration(extractTag(tagName, pkg.Comments))
 }
 
 func newImportTracker() namer.ImportTracker {
@@ -94,23 +94,6 @@ func pathToLegalGoName(in string) string {
 	return strings.Replace(out, "-", "", -1)
 }
 
-func doesPackageNeedGeneration(tag string) bool {
-	return tag == "package" // package type TODO refactor
-}
-
-func extractTag(tag string, comments []string) string {
-	vals := types.ExtractCommentTags("+", comments)[tag]
-	if len(vals) == 0 {
-		return ""
-	}
-
-	return getFirstTagValue(vals...)
-}
-
-func getFirstTagValue(values ...string) string {
-	return strings.Split(values[0], ",")[0]
-}
-
 func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error {
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 	sw.Do(snippets.GenerateMergeMapStringString(), nil)
@@ -126,7 +109,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
-	sw.Do("//auto generated\n", nil)
+	sw.Do("//auto generated\n", nil) // TODO can be removed once setters are constructed for types
 	if hasTypeMetaEmbedded(t) {
 		parentTypeOfTypeMeta := getParentOfTypeMeta(t)
 		b.imports.AddType(parentTypeOfTypeMeta)
@@ -149,17 +132,13 @@ func (b *BuilderPatternGenerator) needsGeneration(t *types.Type) bool {
 }
 
 func (b *BuilderPatternGenerator) doesTypeOptout(t *types.Type) bool {
-	return extractTag(b.tagName, combineTypeComments(t)) == "false"
+	return tags.IsTypeOptedOut(t)
 }
 
 func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
-	tag := extractTag(b.tagName, combineTypeComments(t))
-	log.Debugf("Type: %s, Tag: %s, %v", t.Name, tag, tag == "true")
-	return tag == "true"
-}
-
-func combineTypeComments(t *types.Type) []string {
-	return append(append([]string{}, t.SecondClosestCommentLines...), t.CommentLines...)
+	v := tags.IsTypeEnabled(t)
+	log.Debugf("Type: %s, Tag: %v", t.Name, v)
+	return v
 }
 
 func hasTypeMetaEmbedded(t *types.Type) bool {

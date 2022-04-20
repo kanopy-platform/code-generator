@@ -1,7 +1,6 @@
 package generators
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,41 +8,6 @@ import (
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
 )
-
-func TestExtractCommentTag(t *testing.T) {
-	tag := "test:tag"
-	fmtTag := "+%s=%s"
-	tests := []struct {
-		description string
-		comments    []string
-		want        string
-	}{
-		{
-			description: "Empty value from no comments",
-			comments:    []string{},
-			want:        "",
-		},
-		{
-			description: "Empty value from empty comments",
-			comments:    []string{""},
-			want:        "",
-		},
-		{
-			description: "Value from comments",
-			comments:    []string{fmt.Sprintf(fmtTag, tag, "value")},
-			want:        "value",
-		},
-		{
-			description: "Return first value with multiple values",
-			comments:    []string{fmt.Sprintf(fmtTag, tag, "value,value2")},
-			want:        "value",
-		},
-	}
-
-	for _, test := range tests {
-		assert.Equal(t, test.want, extractTag(tag, test.comments), test.description)
-	}
-}
 
 func TestNewGenerators(t *testing.T) {
 	g := New(&MockBuilderFactory{})
@@ -155,6 +119,6 @@ type MockBuilderFactory struct {
 	generator.DefaultGen
 }
 
-func (m *MockBuilderFactory) NewBuilder(pkg *types.Package, tagValue string) generator.Generator {
+func (m *MockBuilderFactory) NewBuilder(pkg *types.Package) generator.Generator {
 	return m
 }
