@@ -114,7 +114,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		b.imports.AddType(parentTypeOfTypeMeta)
 		b.imports.AddType(getTypeMetaFromType(parentTypeOfTypeMeta))
 		sw.Do(snippets.GenerateDeepCopy(t))
-		sw.Do(snippets.GenerateMarshalJSON(t, b.imports.LocalNameOf(parentTypeOfTypeMeta.Name.Package)))
+		sw.Do(snippets.GenerateMarshalJSON(t, b.getImportAliasOfType(parentTypeOfTypeMeta)))
 	}
 
 	// TODO generate setters for struct
@@ -165,6 +165,10 @@ func getTypeMetaFromType(t *types.Type) *types.Type {
 		}
 	}
 	return nil
+}
+
+func (b *BuilderPatternGenerator) getImportAliasOfType(t *types.Type) string {
+	return b.imports.LocalNameOf(t.Name.Package)
 }
 
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {
