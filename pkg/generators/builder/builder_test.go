@@ -128,8 +128,7 @@ func TestBuilderPattern_GenerateInit(t *testing.T) {
 	pkg, _ := newTestGeneratorType(t, "c", "CDeployment")
 	g := b.NewBuilder(pkg)
 	buf := &bytes.Buffer{}
-	c := &generator.Context{}
-	c.Namers = g.Namers(c)
+	c := newGeneratorContext(g)
 	assert.NoError(t, g.Init(c, buf))
 	assert.Contains(t, buf.String(), "mergeMapStringString")
 }
