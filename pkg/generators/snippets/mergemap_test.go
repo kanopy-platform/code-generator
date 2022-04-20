@@ -16,13 +16,11 @@ func TestGenerateMergeMapStringString(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		ctx     *generator.Context
-		wantErr error
-		want    string
+		ctx  *generator.Context
+		want string
 	}{
 		{
-			ctx:     ctx,
-			wantErr: nil,
+			ctx: ctx,
 			want: `// mergeMapStringString creates a new map and loads it from map args
 // This function takes at least 2 args. Later map args take precedence.
 func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) map[string]string {
@@ -45,12 +43,10 @@ func mergeMapStringString(m1 map[string]string, mapArgs ...map[string]string) ma
 
 	for _, test := range tests {
 		var b bytes.Buffer
-		err := GenerateMergeMapStringString(&b, test.ctx)
-		if test.wantErr != nil {
-			assert.Error(t, err)
-		} else {
-			assert.NoError(t, err)
-			assert.Equal(t, test.want, b.String())
-		}
+		sw := generator.NewSnippetWriter(&b, test.ctx, "$", "$")
+		sw.Do(GenerateMergeMapStringString(), nil)
+		assert.NoError(t, sw.Error())
+		assert.Equal(t, test.want, b.String())
+
 	}
 }
