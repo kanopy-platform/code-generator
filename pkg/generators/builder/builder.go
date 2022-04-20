@@ -31,14 +31,13 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generato
 			OptionalName: d.OutputFileBaseName,
 		},
 		pkgToBuild: pkg,
-		allTypes:   allTypes(pkg),
+		allTypes:   isAllTypes(pkg),
 		imports:    newImportTracker(),
 	}
 }
 
-func allTypes(pkg *types.Package) bool {
+func isAllTypes(pkg *types.Package) bool {
 	return tags.IsPackageTagged(tags.Extract(pkg.Comments))
-	//return doesPackageNeedGeneration(extractTag(tagName, pkg.Comments))
 }
 
 func newImportTracker() namer.ImportTracker {

@@ -17,7 +17,6 @@ const (
 	DefaultNameSystem = "public"
 )
 
-// NameSystems returns the name system used by the generators in this package.
 func NameSystems() namer.NameSystems {
 	const prependPackageNames = 1
 	return namer.NameSystems{
