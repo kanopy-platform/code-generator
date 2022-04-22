@@ -7,3 +7,7 @@ import (
 type SomeStruct struct {
 	a.SomeStruct
 }
+
+type CStruct struct {
+	a.CStruct
+}

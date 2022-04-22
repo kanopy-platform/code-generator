@@ -45,7 +45,7 @@ func newTestGeneratorContext() (*generator.Context, error) {
 	return c, nil
 }
 
-func newSomeStructType(t *testing.T, selector string) *types.Type {
+func newTestType(t *testing.T, selector string) *types.Type {
 	dir := "./testdata"
 	d := args.Default()
 	d.IncludeTestFiles = true
