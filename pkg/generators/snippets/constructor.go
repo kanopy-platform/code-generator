@@ -5,7 +5,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
-func GenerateConstructor(t *types.Type) (string, generator.Args) {
+func GenerateConstructorForStructWithObjectMeta(t *types.Type) (string, generator.Args) {
 	args := generator.Args{
 		"type": t,
 	}
@@ -16,6 +16,7 @@ func New$.type|raw$(name string) *$.type|raw$ {
 	o.ObjectMeta.Name = name
 	return o
 }
+
 `
 	return raw, args
 }

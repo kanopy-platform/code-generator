@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -61,4 +62,30 @@ func newTestType(t *testing.T, selector string) *types.Type {
 	assert.NotNil(t, n)
 
 	return n
+}
+
+// Helper function to select a nested member from a type
+func getMemberFromType(t *testing.T, in *types.Type, selector ...string) types.Member {
+	require.NotNil(t, in)
+
+	currType := in
+	var member types.Member
+
+	for _, s := range selector {
+		foundMember := false
+
+		for _, m := range currType.Members {
+			if m.Name == s {
+				foundMember = true
+				member = m
+				currType = m.Type
+				break
+			}
+		}
+		require.True(t, foundMember, fmt.Sprintf("Member %q not found", s))
+	}
+
+	require.NotEqual(t, types.Member{}, member)
+
+	return member
 }
