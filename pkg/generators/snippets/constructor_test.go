@@ -9,7 +9,7 @@ import (
 	"k8s.io/gengo/generator"
 )
 
-func TestGenerateConstructorForStructWithObjectMeta(t *testing.T) {
+func TestGenerateConstructorForObjectMeta(t *testing.T) {
 	t.Parallel()
 
 	ctx, err := newTestGeneratorContext()
@@ -26,7 +26,7 @@ func NewSomeStruct(name string) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateConstructorForStructWithObjectMeta(test))
+	sw.Do(GenerateConstructorForObjectMeta(test))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }

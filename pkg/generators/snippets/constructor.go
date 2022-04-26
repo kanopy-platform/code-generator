@@ -5,7 +5,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
-func GenerateConstructorForStructWithObjectMeta(t *types.Type) (string, generator.Args) {
+func GenerateConstructorForObjectMeta(t *types.Type) (string, generator.Args) {
 	args := generator.Args{
 		"type": t,
 	}

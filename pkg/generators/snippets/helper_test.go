@@ -58,7 +58,6 @@ func newTestType(t *testing.T, selector string) *types.Type {
 	assert.NoError(t, err)
 
 	n := findTypes[dir].Types[selector]
-	fmt.Println(findTypes, n.Members)
 	assert.NotNil(t, n)
 
 	return n
