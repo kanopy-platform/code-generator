@@ -7,4 +7,9 @@ import (
 type MockDeployment struct {
 	meta.TypeMeta
 	meta.ObjectMeta
+	Spec MockDeploymentSpec
+}
+
+type MockDeploymentSpec struct {
+	Replicas int
 }

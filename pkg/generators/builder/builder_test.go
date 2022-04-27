@@ -101,13 +101,25 @@ func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
+	_, specTypeToGenerate := newTestGeneratorType(t, "c", "MockSpec")
 	g := b.NewBuilder(pkg)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.True(t, g.Filter(c, specTypeToGenerate))
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+
+	// constructor
 	assert.Contains(t, buf.String(), "func NewCDeployment(name string) *CDeployment")
+	// deepcopy
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
+
+	// ObjectMeta setters
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
+	// Spec setters
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in cd.MockDeploymentSpec) *CDeployment")
 }
 
 func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
