@@ -166,10 +166,6 @@ func getTypeMetaFromType(t *types.Type) *types.Type {
 	return nil
 }
 
-func (b *BuilderPatternGenerator) getImportAliasOfType(t *types.Type) string {
-	return b.imports.LocalNameOf(t.Name.Package)
-}
-
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {
 	return namer.NameSystems{
 		"raw": namer.NewRawNamer(b.pkgToBuild.Path, b.imports),
