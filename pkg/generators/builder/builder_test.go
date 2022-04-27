@@ -130,3 +130,13 @@ func TestBuilderPattern_GenerateInit(t *testing.T) {
 	assert.NoError(t, g.Init(c, buf))
 	assert.Contains(t, buf.String(), "mergeMapStringString")
 }
+
+func TestBuilderPattern_GenerateFinalize(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, _ := newTestGeneratorType(t, "c", "CDeployment")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.NoError(t, g.Finalize(c, buf))
+	assert.Contains(t, buf.String(), "// Finalize")
+}

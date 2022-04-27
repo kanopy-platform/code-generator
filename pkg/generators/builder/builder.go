@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"fmt"
 	"go/token"
 	"io"
 	"strings"
@@ -16,9 +17,10 @@ import (
 
 type BuilderPatternGenerator struct {
 	generator.DefaultGen
-	pkgToBuild *types.Package
-	allTypes   bool
-	imports    namer.ImportTracker
+	pkgToBuild   *types.Package
+	allTypes     bool
+	imports      namer.ImportTracker
+	runtimeTypes []*types.Type
 }
 
 type BuilderPatternGeneratorFactory struct {
@@ -52,7 +54,6 @@ func golangNameToImportAlias(tracker namer.ImportTracker, t types.Name) string {
 	path := t.Package
 	dirs := strings.Split(path, namer.GoSeperator)
 	const immediateParentPosition = 2
-
 	for n := len(dirs) - immediateParentPosition; n >= 0; n-- {
 		name := sanitizeGoImportDir(sliceFromParent(dirs, n))
 
@@ -99,6 +100,38 @@ func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error 
 	return sw.Error()
 }
 
+func (b *BuilderPatternGenerator) Finalize(c *generator.Context, w io.Writer) error {
+	sw := generator.NewSnippetWriter(w, c, "$", "$")
+
+	sw.Do("// Finalize", nil)
+
+	alias := []map[string]string{}
+	included := map[string]bool{}
+	for _, r := range b.runtimeTypes {
+		i := b.imports.LocalNameOf(r.Name.Package)
+		fmt.Println(r.Name, " -- ", i)
+		if _, ok := included[i]; !ok {
+			alias = append(alias, map[string]string{"alias": i})
+			included[i] = true
+		}
+	}
+
+	snippet := `
+	func AddToScheme(runtime *runtime.Scheme){
+		$- range .PackageAliases$
+			$.alias$.SchemeBuilder.AddToScheme(runtime)
+		$- end$
+	}
+	`
+
+	args := map[string]interface{}{
+		"PackageAliases": alias,
+	}
+
+	sw.Do(snippet, args)
+	return sw.Error()
+}
+
 func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
 	log.Debugf("Checking type: %s", t.Name.Name)
 	if !b.needsGeneration(t) {
@@ -111,7 +144,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	sw.Do("//auto generated\n", nil) // TODO can be removed once setters are constructed for types
 	if hasTypeMetaEmbedded(t) {
 		parentTypeOfTypeMeta := getParentOfTypeMeta(t)
-		b.imports.AddType(parentTypeOfTypeMeta)
+		b.trackRuntimeType(parentTypeOfTypeMeta)
 		b.imports.AddType(getTypeMetaFromType(parentTypeOfTypeMeta))
 		sw.Do(snippets.GenerateDeepCopy(t))
 	}
@@ -119,6 +152,11 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	// TODO generate setters for struct
 
 	return sw.Error()
+}
+
+func (b *BuilderPatternGenerator) trackRuntimeType(parentTypeOfTypeMeta *types.Type) {
+	b.imports.AddType(parentTypeOfTypeMeta)
+	b.runtimeTypes = append(b.runtimeTypes, parentTypeOfTypeMeta)
 }
 
 func (b *BuilderPatternGenerator) needsGeneration(t *types.Type) bool {
@@ -173,13 +211,12 @@ func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems
 }
 
 func (b *BuilderPatternGenerator) Imports(c *generator.Context) (imports []string) {
-	importLines := []string{}
+	importLines := []string{"k8s.io/apimachinery/pkg/runtime"}
 	for _, singleImport := range b.imports.ImportLines() {
 		if b.isNotTargetPackage(singleImport) {
 			importLines = append(importLines, singleImport)
 		}
 	}
-
 	return importLines
 }
 
