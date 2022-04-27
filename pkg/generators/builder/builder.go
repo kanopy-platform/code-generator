@@ -108,11 +108,20 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
-	sw.Do("//auto generated\n", nil) // TODO can be removed once setters are constructed for types
+	// generate the constructor
+	if hasObjectMetaEmbedded(t) {
+		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
+		b.imports.AddType(parentTypeOfObjectMeta)
+		b.imports.AddType(getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta"))
+		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
+	} else {
+		sw.Do(snippets.GenerateEmptyConstructor(t))
+	}
+
 	if hasTypeMetaEmbedded(t) {
-		parentTypeOfTypeMeta := getParentOfTypeMeta(t)
+		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, "TypeMeta")
 		b.imports.AddType(parentTypeOfTypeMeta)
-		b.imports.AddType(getTypeMetaFromType(parentTypeOfTypeMeta))
+		b.imports.AddType(getMemberFromType(parentTypeOfTypeMeta, "TypeMeta"))
 		sw.Do(snippets.GenerateDeepCopy(t))
 		sw.Do(snippets.GenerateMarshalJSON(t, b.getImportAliasOfType(parentTypeOfTypeMeta)))
 	}
@@ -141,16 +150,23 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 }
 
 func hasTypeMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfTypeMeta(t); p != nil {
+	if p := getParentOfEmbeddedType(t, "TypeMeta"); p != nil {
 		return true
 	}
 	return false
 }
 
-func getParentOfTypeMeta(t *types.Type) *types.Type {
+func hasObjectMetaEmbedded(t *types.Type) bool {
+	if p := getParentOfEmbeddedType(t, "ObjectMeta"); p != nil {
+		return true
+	}
+	return false
+}
+
+func getParentOfEmbeddedType(t *types.Type, name string) *types.Type {
 	for _, m := range t.Members {
 		if m.Embedded {
-			if mm := getTypeMetaFromType(m.Type); mm != nil {
+			if mm := getMemberFromType(m.Type, name); mm != nil {
 				return m.Type
 			}
 		}
@@ -158,9 +174,9 @@ func getParentOfTypeMeta(t *types.Type) *types.Type {
 	return nil
 }
 
-func getTypeMetaFromType(t *types.Type) *types.Type {
+func getMemberFromType(t *types.Type, name string) *types.Type {
 	for _, mm := range t.Members {
-		if mm.Name == "TypeMeta" {
+		if mm.Name == name {
 			return mm.Type
 		}
 	}

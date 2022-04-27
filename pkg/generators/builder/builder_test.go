@@ -79,12 +79,14 @@ func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
 			assert.Empty(t, buf, test.description)
 		} else {
 			assert.NotEmpty(t, buf, test.description)
+			assert.Contains(t, buf.String(), fmt.Sprintf("func New%s(", test.structName))
 		}
 	}
 }
 func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
 	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	assert.True(t, hasTypeMetaEmbedded(typeToGenerate))
+	assert.True(t, hasObjectMetaEmbedded(typeToGenerate))
 }
 
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
@@ -103,6 +105,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	assert.Contains(t, buf.String(), "func NewCDeployment(name string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	assert.Contains(t, buf.String(), "func (o CDeployment) MarshalJSON()")

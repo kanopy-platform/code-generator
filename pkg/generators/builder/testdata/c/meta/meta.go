@@ -4,3 +4,8 @@ package meta
 type TypeMeta struct {
 	Name string
 }
+
+// mock ObjectMeta
+type ObjectMeta struct {
+	Name string
+}

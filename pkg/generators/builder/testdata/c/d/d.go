@@ -6,4 +6,5 @@ import (
 
 type MockDeployment struct {
 	meta.TypeMeta
+	meta.ObjectMeta
 }
