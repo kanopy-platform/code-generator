@@ -105,8 +105,6 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
-	assert.Contains(t, buf.String(), "func (o CDeployment) MarshalJSON()")
-	assert.Contains(t, buf.String(), "d.SchemeGroupVersion")
 }
 
 func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
