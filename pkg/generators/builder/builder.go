@@ -126,9 +126,39 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		sw.Do(snippets.GenerateMarshalJSON(t, b.getImportAliasOfType(parentTypeOfTypeMeta)))
 	}
 
-	// TODO generate setters for struct
+	// generate setters for struct
+	if hasObjectMetaEmbedded(t) {
+		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
+		objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
+		generateSettersForType(sw, t, objectMetaType)
+		generateSettersForType(sw, t, parentTypeOfObjectMeta)
+	} else {
+		generateSettersForType(sw, t, t)
+	}
 
 	return sw.Error()
+}
+
+func generateSettersForType(sw *generator.SnippetWriter, root *types.Type, t *types.Type) {
+	for _, m := range t.Members {
+		if m.Embedded {
+			continue
+		}
+
+		if m.Type.Kind == types.Map {
+			sw.Do(snippets.GenerateSetterForMap(root, m))
+		} else if m.Type.Kind == types.Slice {
+			// TODO how to determine for embedded members?
+			sw.Do(snippets.GenerateSetterForMemberSlice(root, m))
+		} else if m.Type.Kind == types.Struct {
+			// TODO how to determine for embedded members?
+			sw.Do(snippets.GenerateSetterForMemberStruct(root, m))
+		} else if m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin {
+			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, m))
+		} else {
+			sw.Do(snippets.GenerateSetterForPrimitiveType(root, m))
+		}
+	}
 }
 
 func (b *BuilderPatternGenerator) needsGeneration(t *types.Type) bool {

@@ -105,11 +105,44 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+
+	// constructor
 	assert.Contains(t, buf.String(), "func NewCDeployment(name string) *CDeployment")
+	// deepcopy
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	assert.Contains(t, buf.String(), "func (o CDeployment) MarshalJSON()")
 	assert.Contains(t, buf.String(), "d.SchemeGroupVersion")
+	// ObjectMeta setters
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
+	// Spec setters
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in cd.MockDeploymentSpec) *CDeployment")
+
+	// TODO test case for AStruct?
+
+}
+
+func TestGenerateSettersForType(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+
+	parentTypeOfObjectMeta := getParentOfEmbeddedType(typeToGenerate, "ObjectMeta")
+	objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
+
+	sw := generator.NewSnippetWriter(buf, c, "$", "$")
+	generateSettersForType(sw, typeToGenerate, objectMetaType)
+
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendFinalizers(in ...string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithMockStruct(in cmeta.MockStruct) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
+	assert.Contains(t, buf.String(), "o.IntPtr = &in")
+
 }
 
 func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
