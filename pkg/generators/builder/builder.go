@@ -149,19 +149,19 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 
 			switch sliceType.Kind {
 			case types.Struct:
-				wrapper := b.getTypeEnabledForGeneration(sliceType)
-				if wrapper != nil {
-					// only add setters for structs enabled for generation
-					sw.Do(snippets.GenerateSetterForEmbeddedSlice(root, parent, m, wrapper))
+				// skip adding setters for un-enabled structs
+				inputType := b.getTypeEnabledForGeneration(sliceType)
+				if inputType != nil {
+					sw.Do(snippets.GenerateSetterForEmbeddedSlice(root, parent, m, inputType))
 				}
 			default:
 				sw.Do(snippets.GenerateSetterForMemberSlice(root, parent, m))
 			}
 		} else if m.Type.Kind == types.Struct {
-			wrapper := b.getTypeEnabledForGeneration(m.Type)
-			if wrapper != nil {
-				// only add setters for structs enabled for generation
-				sw.Do(snippets.GenerateSetterForEmbeddedStruct(root, parent, m, wrapper))
+			// skip adding setters for un-enabled structs
+			inputType := b.getTypeEnabledForGeneration(m.Type)
+			if inputType != nil {
+				sw.Do(snippets.GenerateSetterForEmbeddedStruct(root, parent, m, inputType))
 			}
 		} else if m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin {
 			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, parent, m))
