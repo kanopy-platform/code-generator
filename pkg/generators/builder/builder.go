@@ -16,9 +16,10 @@ import (
 
 type BuilderPatternGenerator struct {
 	generator.DefaultGen
-	pkgToBuild *types.Package
-	allTypes   bool
-	imports    namer.ImportTracker
+	pkgToBuild        *types.Package
+	allTypes          bool
+	imports           namer.ImportTracker
+	typesToWrapperMap map[string]*types.Type
 }
 
 type BuilderPatternGeneratorFactory struct {
@@ -30,9 +31,10 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generato
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
-		pkgToBuild: pkg,
-		allTypes:   isAllTypes(pkg),
-		imports:    newImportTracker(),
+		pkgToBuild:        pkg,
+		allTypes:          isAllTypes(pkg),
+		imports:           newImportTracker(),
+		typesToWrapperMap: map[string]*types.Type{},
 	}
 }
 
@@ -100,10 +102,6 @@ func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error 
 }
 
 func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
-	log.Debugf("Checking type: %s", t.Name.Name)
-	if !b.needsGeneration(t) {
-		return nil
-	}
 	log.Infof("Generating type: %s", t.Name.Name)
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
@@ -129,33 +127,46 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
 		objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
-		generateSettersForType(sw, t, objectMetaType)
-		generateSettersForType(sw, t, parentTypeOfObjectMeta)
+		b.generateSettersForType(sw, t, objectMetaType)
+		b.generateSettersForType(sw, t, parentTypeOfObjectMeta)
 	} else {
-		generateSettersForType(sw, t, t)
+		b.generateSettersForType(sw, t, t.Members[0].Type)
 	}
 
 	return sw.Error()
 }
 
-func generateSettersForType(sw *generator.SnippetWriter, root *types.Type, t *types.Type) {
+func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWriter, root *types.Type, t *types.Type) {
 	for _, m := range t.Members {
 		if m.Embedded {
 			continue
 		}
 
 		if m.Type.Kind == types.Map {
-			sw.Do(snippets.GenerateSetterForMap(root, m))
+			sw.Do(snippets.GenerateSetterForMap(root, t, m))
 		} else if m.Type.Kind == types.Slice {
-			// TODO how to determine for embedded members?
-			sw.Do(snippets.GenerateSetterForMemberSlice(root, m))
+			elemType := m.Type.Elem
+
+			switch elemType.Kind {
+			case types.Struct:
+				wrapper := b.getWrapperIfEnabledForGeneration(elemType)
+				if wrapper != nil {
+					// only add setters for structs enabled for generation
+					sw.Do(snippets.GenerateSetterForEmbeddedSlice(root, t, m, wrapper))
+				}
+			default:
+				sw.Do(snippets.GenerateSetterForMemberSlice(root, t, m))
+			}
 		} else if m.Type.Kind == types.Struct {
-			// TODO how to determine for embedded members?
-			sw.Do(snippets.GenerateSetterForMemberStruct(root, m))
+			wrapper := b.getWrapperIfEnabledForGeneration(m.Type)
+			if wrapper != nil {
+				// only add setters for structs enabled for generation
+				sw.Do(snippets.GenerateSetterForEmbeddedStruct(root, t, m, wrapper))
+			}
 		} else if m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin {
-			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, m))
+			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, t, m))
 		} else {
-			sw.Do(snippets.GenerateSetterForPrimitiveType(root, m))
+			sw.Do(snippets.GenerateSetterForPrimitiveType(root, t, m))
 		}
 	}
 }
@@ -176,6 +187,14 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 	v := tags.IsTypeEnabled(t)
 	log.Debugf("Type: %s, Tag: %v", t.Name, v)
 	return v
+}
+
+func (b *BuilderPatternGenerator) getWrapperIfEnabledForGeneration(t *types.Type) *types.Type {
+	typeName := t.Name.String()
+	if wrapper, ok := b.typesToWrapperMap[typeName]; ok {
+		return wrapper
+	}
+	return nil
 }
 
 func hasTypeMetaEmbedded(t *types.Type) bool {
@@ -210,6 +229,23 @@ func getMemberFromType(t *types.Type, name string) *types.Type {
 		}
 	}
 	return nil
+}
+
+func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bool {
+	log.Debugf("Checking type: %s", t.Name.Name)
+	if !b.needsGeneration(t) {
+		return false
+	}
+
+	// add embedded members to lookup table
+	for _, m := range t.Members {
+		if m.Embedded {
+			typeName := m.Type.Name.String()
+			b.typesToWrapperMap[typeName] = t
+		}
+	}
+
+	return true
 }
 
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {

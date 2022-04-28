@@ -37,34 +37,34 @@ func newGeneratorContext(g generator.Generator) *generator.Context {
 	return c
 }
 
-func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
+func TestBuilderPatternGenerator_Filter(t *testing.T) {
 	tests := []struct {
 		description string
 		dir         string
 		structName  string
-		wantEmpty   bool
+		wantGen     bool
 	}{
 		{
 			description: "Types do not need generation",
 			dir:         "a",
 			structName:  "NoGeneration",
-			wantEmpty:   true,
 		},
 		{
 			description: "Types need generation",
 			dir:         "a",
 			structName:  "AStruct",
+			wantGen:     true,
 		},
 		{
 			description: "All package types need generation",
 			dir:         "b",
 			structName:  "BStruct",
+			wantGen:     true,
 		},
 		{
 			description: "Type generation opt-out",
 			dir:         "b",
 			structName:  "OptOutStruct",
-			wantEmpty:   true,
 		},
 	}
 
@@ -72,15 +72,8 @@ func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
 		b := &BuilderPatternGeneratorFactory{}
 		pkg, typeToGenerate := newTestGeneratorType(t, test.dir, test.structName)
 		g := b.NewBuilder(pkg)
-		buf := &bytes.Buffer{}
 		c := newGeneratorContext(g)
-		assert.NoError(t, g.GenerateType(c, typeToGenerate, buf), test.description)
-		if test.wantEmpty {
-			assert.Empty(t, buf, test.description)
-		} else {
-			assert.NotEmpty(t, buf, test.description)
-			assert.Contains(t, buf.String(), fmt.Sprintf("func New%s(", test.structName))
-		}
+		assert.Equal(t, test.wantGen, g.Filter(c, typeToGenerate), test.description)
 	}
 }
 func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
@@ -118,8 +111,11 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	// ObjectMeta setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendFinalizers(in ...string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
 	// Spec setters
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in cd.MockDeploymentSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in MockSpec) *CDeployment")
+	assert.NotContains(t, buf.String(), "func (o *CDeployment) SpecNoGen")
 }
 
 func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
