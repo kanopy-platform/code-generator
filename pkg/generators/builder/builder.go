@@ -117,9 +117,9 @@ func (b *BuilderPatternGenerator) Finalize(c *generator.Context, w io.Writer) er
 	}
 
 	snippet := `
-	func AddToScheme(runtime *runtime.Scheme){
+	func AddToSchemeOrPanic(s *runtime.Scheme){
 		$- range .PackageAliases$
-			$.alias$.SchemeBuilder.AddToScheme(runtime)
+			utilruntime.Must($.alias$.SchemeBuilder.AddToScheme(s))
 		$- end$
 	}
 	`
@@ -211,12 +211,19 @@ func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems
 }
 
 func (b *BuilderPatternGenerator) Imports(c *generator.Context) (imports []string) {
+	b.imports.AddType(&types.Type{
+		Name: types.Name{
+			Name:    "Runtime",
+			Package: "k8s.io/apimachinery/pkg/util/runtime",
+		},
+	})
 	importLines := []string{"k8s.io/apimachinery/pkg/runtime"}
 	for _, singleImport := range b.imports.ImportLines() {
 		if b.isNotTargetPackage(singleImport) {
 			importLines = append(importLines, singleImport)
 		}
 	}
+
 	return importLines
 }
 
