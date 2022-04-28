@@ -5,8 +5,8 @@ type UnspecifiedReceiver struct {
 }
 
 // +kanopy:builder=true
-// +kanopy:receiver=ptr
-type PtrReceiver struct {
+// +kanopy:receiver=pointer
+type PointerReceiver struct {
 }
 
 // +kanopy:builder=false

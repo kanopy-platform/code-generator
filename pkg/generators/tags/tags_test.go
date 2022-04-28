@@ -73,10 +73,10 @@ func TestAllPackageTypes(t *testing.T) {
 	assert.True(t, IsPackageTagged(getTestPackage(t).Comments))
 }
 
-func TestPtrReceiver(t *testing.T) {
-	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
-	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["PtrReceiver"]))
-	assert.False(t, IsPtrReceiver(getTestPackage(t).Types["ValueReceiver"]))
+func TestPointerReceiver(t *testing.T) {
+	assert.True(t, IsPointerReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
+	assert.True(t, IsPointerReceiver(getTestPackage(t).Types["PointerReceiver"]))
+	assert.False(t, IsPointerReceiver(getTestPackage(t).Types["ValueReceiver"]))
 }
 
 func TestValueReceiver(t *testing.T) {

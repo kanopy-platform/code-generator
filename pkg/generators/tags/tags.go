@@ -8,34 +8,34 @@ import (
 
 const (
 	Builder         = "kanopy:builder"
-	Builder_Package = "package"
-	Builder_OptIn   = "true"
-	Builder_OptOut  = "false"
+	BuilderPackage  = "package"
+	BuilderOptIn    = "true"
+	BuilderOptOut   = "false"
 	Receiver        = "kanopy:receiver"
-	Receiver_Ptr    = "ptr"
-	Receiver_Value  = "value"
+	ReceiverPointer = "pointer"
+	ReceiverValue   = "value"
 )
 
 func IsPackageTagged(comments []string) bool {
-	return Extract(comments, Builder) == Builder_Package
+	return Extract(comments, Builder) == BuilderPackage
 }
 
 func IsTypeEnabled(t *types.Type) bool {
-	return Extract(combineTypeComments(t), Builder) == Builder_OptIn
+	return Extract(combineTypeComments(t), Builder) == BuilderOptIn
 }
 
 func IsTypeOptedOut(t *types.Type) bool {
-	return Extract(combineTypeComments(t), Builder) == Builder_OptOut
+	return Extract(combineTypeComments(t), Builder) == BuilderOptOut
 }
 
-func IsPtrReceiver(t *types.Type) bool {
+func IsPointerReceiver(t *types.Type) bool {
 	val := Extract(combineTypeComments(t), Receiver)
 	// default to Pointer Receiver if unspecified
-	return (val == Receiver_Ptr) || (val == "")
+	return (val == ReceiverPointer) || (val == "")
 }
 
 func IsValueReceiver(t *types.Type) bool {
-	return Extract(combineTypeComments(t), Receiver) == Receiver_Value
+	return Extract(combineTypeComments(t), Receiver) == ReceiverValue
 }
 
 func Extract(comments []string, tag string) string {
