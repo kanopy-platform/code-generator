@@ -16,10 +16,10 @@ import (
 
 type BuilderPatternGenerator struct {
 	generator.DefaultGen
-	pkgToBuild        *types.Package
-	allTypes          bool
-	imports           namer.ImportTracker
-	typesToWrapperMap map[string]*types.Type
+	pkgToBuild      *types.Package
+	allTypes        bool
+	imports         namer.ImportTracker
+	typesToGenerate map[string]*types.Type
 }
 
 type BuilderPatternGeneratorFactory struct {
@@ -31,10 +31,10 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generato
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
-		pkgToBuild:        pkg,
-		allTypes:          isAllTypes(pkg),
-		imports:           newImportTracker(),
-		typesToWrapperMap: map[string]*types.Type{},
+		pkgToBuild:      pkg,
+		allTypes:        isAllTypes(pkg),
+		imports:         newImportTracker(),
+		typesToGenerate: map[string]*types.Type{},
 	}
 }
 
@@ -136,37 +136,37 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	return sw.Error()
 }
 
-func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWriter, root *types.Type, t *types.Type) {
-	for _, m := range t.Members {
+func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWriter, root *types.Type, parent *types.Type) {
+	for _, m := range parent.Members {
 		if m.Embedded {
 			continue
 		}
 
 		if m.Type.Kind == types.Map {
-			sw.Do(snippets.GenerateSetterForMap(root, t, m))
+			sw.Do(snippets.GenerateSetterForMap(root, parent, m))
 		} else if m.Type.Kind == types.Slice {
-			elemType := m.Type.Elem
+			sliceType := m.Type.Elem
 
-			switch elemType.Kind {
+			switch sliceType.Kind {
 			case types.Struct:
-				wrapper := b.getWrapperIfEnabledForGeneration(elemType)
+				wrapper := b.getTypeEnabledForGeneration(sliceType)
 				if wrapper != nil {
 					// only add setters for structs enabled for generation
-					sw.Do(snippets.GenerateSetterForEmbeddedSlice(root, t, m, wrapper))
+					sw.Do(snippets.GenerateSetterForEmbeddedSlice(root, parent, m, wrapper))
 				}
 			default:
-				sw.Do(snippets.GenerateSetterForMemberSlice(root, t, m))
+				sw.Do(snippets.GenerateSetterForMemberSlice(root, parent, m))
 			}
 		} else if m.Type.Kind == types.Struct {
-			wrapper := b.getWrapperIfEnabledForGeneration(m.Type)
+			wrapper := b.getTypeEnabledForGeneration(m.Type)
 			if wrapper != nil {
 				// only add setters for structs enabled for generation
-				sw.Do(snippets.GenerateSetterForEmbeddedStruct(root, t, m, wrapper))
+				sw.Do(snippets.GenerateSetterForEmbeddedStruct(root, parent, m, wrapper))
 			}
 		} else if m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin {
-			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, t, m))
+			sw.Do(snippets.GenerateSetterForPointerToBuiltinType(root, parent, m))
 		} else {
-			sw.Do(snippets.GenerateSetterForPrimitiveType(root, t, m))
+			sw.Do(snippets.GenerateSetterForPrimitiveType(root, parent, m))
 		}
 	}
 }
@@ -189,9 +189,9 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 	return v
 }
 
-func (b *BuilderPatternGenerator) getWrapperIfEnabledForGeneration(t *types.Type) *types.Type {
+func (b *BuilderPatternGenerator) getTypeEnabledForGeneration(t *types.Type) *types.Type {
 	typeName := t.Name.String()
-	if wrapper, ok := b.typesToWrapperMap[typeName]; ok {
+	if wrapper, ok := b.typesToGenerate[typeName]; ok {
 		return wrapper
 	}
 	return nil
@@ -237,11 +237,10 @@ func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bo
 		return false
 	}
 
-	// add embedded members to lookup table
 	for _, m := range t.Members {
 		if m.Embedded {
 			typeName := m.Type.Name.String()
-			b.typesToWrapperMap[typeName] = t
+			b.typesToGenerate[typeName] = t
 		}
 	}
 

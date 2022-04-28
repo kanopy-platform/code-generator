@@ -111,7 +111,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
 }
 
-func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
+func TestBuilderPattern_NonMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
 	g := b.NewBuilder(pkg)
