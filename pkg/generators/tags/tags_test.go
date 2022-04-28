@@ -76,10 +76,12 @@ func TestAllPackageTypes(t *testing.T) {
 func TestPtrReceiver(t *testing.T) {
 	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
 	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["PtrReceiver"]))
+	assert.False(t, IsPtrReceiver(getTestPackage(t).Types["ValueReceiver"]))
 }
 
 func TestValueReceiver(t *testing.T) {
 	assert.True(t, IsValueReceiver(getTestPackage(t).Types["ValueReceiver"]))
+	assert.False(t, IsValueReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
 }
 
 func getTestPackage(t *testing.T) *types.Package {
