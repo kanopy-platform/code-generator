@@ -130,6 +130,17 @@ func TestBuilderPattern_GenerateInit(t *testing.T) {
 	assert.Contains(t, buf.String(), "mergeMapStringString")
 }
 
+func TestBuilderPattern_GenerateAddToSchemeOrPanic(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	assert.NoError(t, g.Finalize(c, buf))
+	assert.Equal(t, strings.Count(buf.String(), "cd.SchemeBuilder"), 1)
+}
+
 func TestBuilderPattern_GenerateFinalize(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, _ := newTestGeneratorType(t, "c", "CDeployment")

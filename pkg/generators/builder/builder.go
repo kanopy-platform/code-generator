@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"fmt"
 	"go/token"
 	"io"
 	"strings"
@@ -20,7 +19,7 @@ type BuilderPatternGenerator struct {
 	pkgToBuild   *types.Package
 	allTypes     bool
 	imports      namer.ImportTracker
-	runtimeTypes []*types.Type
+	runtimeTypes map[string]*types.Type
 }
 
 type BuilderPatternGeneratorFactory struct {
@@ -32,9 +31,10 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generato
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
-		pkgToBuild: pkg,
-		allTypes:   isAllTypes(pkg),
-		imports:    newImportTracker(),
+		pkgToBuild:   pkg,
+		allTypes:     isAllTypes(pkg),
+		imports:      newImportTracker(),
+		runtimeTypes: make(map[string]*types.Type),
 	}
 }
 
@@ -102,34 +102,18 @@ func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error 
 
 func (b *BuilderPatternGenerator) Finalize(c *generator.Context, w io.Writer) error {
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
-
 	sw.Do("// Finalize", nil)
+	sw.Do(snippets.GenerateAddToScheme(b.runtimeTypesToImportAliases()))
+	return sw.Error()
+}
 
-	alias := []map[string]string{}
-	included := map[string]bool{}
+func (b *BuilderPatternGenerator) runtimeTypesToImportAliases() []string {
+	alias := []string{}
 	for _, r := range b.runtimeTypes {
 		i := b.imports.LocalNameOf(r.Name.Package)
-		fmt.Println(r.Name, " -- ", i)
-		if _, ok := included[i]; !ok {
-			alias = append(alias, map[string]string{"alias": i})
-			included[i] = true
-		}
+		alias = append(alias, i)
 	}
-
-	snippet := `
-	func AddToSchemeOrPanic(s *runtime.Scheme){
-		$- range .PackageAliases$
-			utilruntime.Must($.alias$.SchemeBuilder.AddToScheme(s))
-		$- end$
-	}
-	`
-
-	args := map[string]interface{}{
-		"PackageAliases": alias,
-	}
-
-	sw.Do(snippet, args)
-	return sw.Error()
+	return alias
 }
 
 func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
@@ -156,7 +140,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 func (b *BuilderPatternGenerator) trackRuntimeType(parentTypeOfTypeMeta *types.Type) {
 	b.imports.AddType(parentTypeOfTypeMeta)
-	b.runtimeTypes = append(b.runtimeTypes, parentTypeOfTypeMeta)
+	b.runtimeTypes[parentTypeOfTypeMeta.Name.Package] = parentTypeOfTypeMeta
 }
 
 func (b *BuilderPatternGenerator) needsGeneration(t *types.Type) bool {
