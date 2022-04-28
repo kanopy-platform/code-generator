@@ -51,8 +51,8 @@ func TestExtractCommentTag(t *testing.T) {
 		{
 			description: "Receiver tag",
 			tag:         Receiver,
-			comments:    []string{fmt.Sprintf(fmtTag, Receiver, "ptr")},
-			want:        "ptr",
+			comments:    []string{fmt.Sprintf(fmtTag, Receiver, "pointer")},
+			want:        "pointer",
 		},
 	}
 
