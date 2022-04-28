@@ -10,6 +10,7 @@ import (
 	"k8s.io/gengo/types"
 )
 
+// TODO for each test need to add if root != parent
 func TestGenerateSetterForPrimitiveType(t *testing.T) {
 	t.Parallel()
 
