@@ -252,7 +252,7 @@ func TestMemberAccessor(t *testing.T) {
 		want        string
 	}{
 		{
-			description: "Root and Parent are the same, no intermediary to access member",
+			description: "Root and Parent are the same, access member directly",
 			parent:      root,
 			member:      getMemberFromType(t, someStruct, "SomeStruct", "AStruct"),
 			want:        "AStruct",
