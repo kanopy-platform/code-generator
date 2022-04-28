@@ -10,7 +10,6 @@ type ObjectMeta struct {
 	Name       string
 	Labels     map[string]string
 	Finalizers []string
-	MockStruct MockStruct
 	IntPtr     *int
 }
 

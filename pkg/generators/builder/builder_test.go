@@ -37,34 +37,34 @@ func newGeneratorContext(g generator.Generator) *generator.Context {
 	return c
 }
 
-func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
+func TestBuilderPatternGenerator_Filter(t *testing.T) {
 	tests := []struct {
 		description string
 		dir         string
 		structName  string
-		wantEmpty   bool
+		wantGen     bool
 	}{
 		{
 			description: "Types do not need generation",
 			dir:         "a",
 			structName:  "NoGeneration",
-			wantEmpty:   true,
 		},
 		{
 			description: "Types need generation",
 			dir:         "a",
 			structName:  "AStruct",
+			wantGen:     true,
 		},
 		{
 			description: "All package types need generation",
 			dir:         "b",
 			structName:  "BStruct",
+			wantGen:     true,
 		},
 		{
 			description: "Type generation opt-out",
 			dir:         "b",
 			structName:  "OptOutStruct",
-			wantEmpty:   true,
 		},
 	}
 
@@ -72,15 +72,8 @@ func TestBuilderPatternGenerator_NeedsGeneration(t *testing.T) {
 		b := &BuilderPatternGeneratorFactory{}
 		pkg, typeToGenerate := newTestGeneratorType(t, test.dir, test.structName)
 		g := b.NewBuilder(pkg)
-		buf := &bytes.Buffer{}
 		c := newGeneratorContext(g)
-		assert.NoError(t, g.GenerateType(c, typeToGenerate, buf), test.description)
-		if test.wantEmpty {
-			assert.Empty(t, buf, test.description)
-		} else {
-			assert.NotEmpty(t, buf, test.description)
-			assert.Contains(t, buf.String(), fmt.Sprintf("func New%s(", test.structName))
-		}
+		assert.Equal(t, test.wantGen, g.Filter(c, typeToGenerate), test.description)
 	}
 }
 func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
@@ -101,9 +94,12 @@ func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
+	_, specTypeToGenerate := newTestGeneratorType(t, "c", "MockSpec")
 	g := b.NewBuilder(pkg)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.True(t, g.Filter(c, specTypeToGenerate))
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
 
 	// constructor
@@ -116,32 +112,11 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	// ObjectMeta setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
-	// Spec setters
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in cd.MockDeploymentSpec) *CDeployment")
-
-	// TODO test case for AStruct?
-
-}
-
-func TestGenerateSettersForType(t *testing.T) {
-	b := &BuilderPatternGeneratorFactory{}
-	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg)
-	buf := &bytes.Buffer{}
-	c := newGeneratorContext(g)
-
-	parentTypeOfObjectMeta := getParentOfEmbeddedType(typeToGenerate, "ObjectMeta")
-	objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
-
-	sw := generator.NewSnippetWriter(buf, c, "$", "$")
-	generateSettersForType(sw, typeToGenerate, objectMetaType)
-
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendFinalizers(in ...string) *CDeployment")
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithMockStruct(in cmeta.MockStruct) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
-	assert.Contains(t, buf.String(), "o.IntPtr = &in")
+	// Spec setters
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in MockSpec) *CDeployment")
+	assert.NotContains(t, buf.String(), "func (o *CDeployment) SpecNoGen")
 
 }
 

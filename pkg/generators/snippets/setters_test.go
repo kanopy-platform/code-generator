@@ -29,7 +29,7 @@ func (o *SomeStruct) WithName(in string) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForPrimitiveType(root, member))
+	sw.Do(GenerateSetterForPrimitiveType(root, root, member))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -53,7 +53,7 @@ func (o *SomeStruct) WithLabels(in map[string]string) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForMap(root, member))
+	sw.Do(GenerateSetterForMap(root, root, member))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -77,7 +77,7 @@ func (o *SomeStruct) AppendStrings(in ...string) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForMemberSlice(root, member))
+	sw.Do(GenerateSetterForMemberSlice(root, root, member))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -105,7 +105,7 @@ func (o *SomeStruct) AppendCStructs(in ...CStruct) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForEmbeddedSlice(root, member, wrapper))
+	sw.Do(GenerateSetterForEmbeddedSlice(root, root, member, wrapper))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -129,7 +129,7 @@ func (o *SomeStruct) WithAStruct(in a.AStruct) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForMemberStruct(root, member))
+	sw.Do(GenerateSetterForMemberStruct(root, root, member))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -155,7 +155,7 @@ func (o *SomeStruct) WithCStruct(in CStruct) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForEmbeddedStruct(root, member, wrapper))
+	sw.Do(GenerateSetterForEmbeddedStruct(root, root, member, wrapper))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
@@ -179,7 +179,7 @@ func (o *SomeStruct) WithIntPtr(in int) *SomeStruct {
 `
 	var b bytes.Buffer
 	sw := generator.NewSnippetWriter(&b, ctx, "$", "$")
-	sw.Do(GenerateSetterForPointerToBuiltinType(root, member))
+	sw.Do(GenerateSetterForPointerToBuiltinType(root, root, member))
 	assert.NoError(t, sw.Error())
 	assert.Equal(t, want, b.String())
 }
