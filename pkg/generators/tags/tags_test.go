@@ -14,38 +14,50 @@ func TestExtractCommentTag(t *testing.T) {
 	fmtTag := "+%s=%s"
 	tests := []struct {
 		description string
+		tag         string
 		comments    []string
 		want        string
 	}{
 		{
 			description: "Empty value from no comments",
+			tag:         Builder,
 			comments:    []string{},
 			want:        "",
 		},
 		{
 			description: "Empty value from empty comments",
+			tag:         Builder,
 			comments:    []string{""},
 			want:        "",
 		},
 		{
 			description: "Value from comments",
-			comments:    []string{fmt.Sprintf(fmtTag, Name, "value")},
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value")},
 			want:        "value",
 		},
 		{
 			description: "Tag with no value",
-			comments:    []string{fmt.Sprintf(fmtTag, Name, "")},
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "")},
 			want:        "",
 		},
 		{
 			description: "Return first value with multiple values",
-			comments:    []string{fmt.Sprintf(fmtTag, Name, "value,value2")},
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value,value2")},
 			want:        "value",
+		},
+		{
+			description: "Receiver tag",
+			tag:         Receiver,
+			comments:    []string{fmt.Sprintf(fmtTag, Receiver, "ptr")},
+			want:        "ptr",
 		},
 	}
 
 	for _, test := range tests {
-		assert.Equal(t, test.want, Extract(test.comments), test.description)
+		assert.Equal(t, test.want, Extract(test.comments, test.tag), test.description)
 	}
 }
 
@@ -58,7 +70,16 @@ func TestTypeOptOut(t *testing.T) {
 }
 
 func TestAllPackageTypes(t *testing.T) {
-	assert.True(t, IsPackageTagged(Extract(getTestPackage(t).Comments)))
+	assert.True(t, IsPackageTagged(getTestPackage(t).Comments))
+}
+
+func TestPtrReceiver(t *testing.T) {
+	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
+	assert.True(t, IsPtrReceiver(getTestPackage(t).Types["PtrReceiver"]))
+}
+
+func TestValueReceiver(t *testing.T) {
+	assert.True(t, IsValueReceiver(getTestPackage(t).Types["ValueReceiver"]))
 }
 
 func getTestPackage(t *testing.T) *types.Package {
