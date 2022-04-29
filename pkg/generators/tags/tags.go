@@ -7,26 +7,39 @@ import (
 )
 
 const (
-	Name    = "kanopy:builder"
-	Package = "package"
+	Builder         = "kanopy:builder"
+	BuilderPackage  = "package"
+	BuilderOptIn    = "true"
+	BuilderOptOut   = "false"
+	Receiver        = "kanopy:receiver"
+	ReceiverPointer = "pointer"
+	ReceiverValue   = "value"
 )
 
-func IsPackageTagged(tag string) bool {
-	return tag == Package
+func IsPackageTagged(comments []string) bool {
+	return Extract(comments, Builder) == BuilderPackage
 }
 
 func IsTypeEnabled(t *types.Type) bool {
-	tag := Extract(combineTypeComments(t))
-	return tag == "true"
+	return Extract(combineTypeComments(t), Builder) == BuilderOptIn
 }
 
 func IsTypeOptedOut(t *types.Type) bool {
-	tag := Extract(combineTypeComments(t))
-	return tag == "false"
+	return Extract(combineTypeComments(t), Builder) == BuilderOptOut
 }
 
-func Extract(comments []string) string {
-	vals := types.ExtractCommentTags("+", comments)[Name]
+func IsPointerReceiver(t *types.Type) bool {
+	val := Extract(combineTypeComments(t), Receiver)
+	defaultPointer := val == ""
+	return (val == ReceiverPointer) || defaultPointer
+}
+
+func IsValueReceiver(t *types.Type) bool {
+	return Extract(combineTypeComments(t), Receiver) == ReceiverValue
+}
+
+func Extract(comments []string, tag string) string {
+	vals := types.ExtractCommentTags("+", comments)[tag]
 	if len(vals) == 0 {
 		return ""
 	}

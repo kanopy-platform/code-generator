@@ -37,7 +37,7 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generato
 }
 
 func isAllTypes(pkg *types.Package) bool {
-	return tags.IsPackageTagged(tags.Extract(pkg.Comments))
+	return tags.IsPackageTagged(pkg.Comments)
 }
 
 func newImportTracker() namer.ImportTracker {

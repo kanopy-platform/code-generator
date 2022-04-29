@@ -48,8 +48,7 @@ func (g *Generators) Packages(context *generator.Context, arguments *args.Genera
 	packages := generator.Packages{}
 	for _, v := range context.Inputs {
 		pkg := context.Universe[v]
-		tagValue := tags.Extract(pkg.Comments)
-		if tags.IsPackageTagged(tagValue) || doPackageTypesNeedGeneration(pkg) {
+		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
 			log.Infof("Package: %s marked for generation.", pkg.Name)
 			packages = append(packages, &generator.DefaultPackage{
 				PackageName:   pkg.Name,
