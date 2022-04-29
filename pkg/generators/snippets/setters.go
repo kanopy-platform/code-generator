@@ -3,6 +3,7 @@ package snippets
 import (
 	"fmt"
 
+	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
 )
@@ -13,11 +14,11 @@ type Setter struct {
 	IsPointerReceiver bool
 }
 
-func NewSetter(root, parent *types.Type, isPointerReceiver bool) *Setter {
+func NewSetter(root, parent *types.Type) *Setter {
 	return &Setter{
 		Root:              root,
 		Parent:            parent,
-		IsPointerReceiver: isPointerReceiver,
+		IsPointerReceiver: tags.IsPointerReceiver(root),
 	}
 }
 
