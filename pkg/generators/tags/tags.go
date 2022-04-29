@@ -38,6 +38,15 @@ func IsValueReceiver(t *types.Type) bool {
 	return Extract(combineTypeComments(t), Receiver) == ReceiverValue
 }
 
+func IsMemberReadyOnly(m types.Member) bool {
+	for _, s := range m.CommentLines {
+		if strings.Contains(s, "Read-only") {
+			return true
+		}
+	}
+	return false
+}
+
 func Extract(comments []string, tag string) string {
 	vals := types.ExtractCommentTags("+", comments)[tag]
 	if len(vals) == 0 {
