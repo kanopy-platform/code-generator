@@ -1,6 +1,6 @@
 package a
 
-type StructWithMemberComments struct {
+type MemberComments struct {
 	// This member can be set.
 	//
 	// Comments are gibberish...

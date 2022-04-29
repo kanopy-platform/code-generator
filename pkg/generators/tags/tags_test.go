@@ -85,7 +85,7 @@ func TestValueReceiver(t *testing.T) {
 }
 
 func TestMemberReadyOnly(t *testing.T) {
-	testType := getTestPackage(t).Types["StructWithMemberComments"]
+	testType := getTestPackage(t).Types["MemberComments"]
 	assert.False(t, IsMemberReadyOnly(getMemberByName(t, testType, "Name")))
 	assert.True(t, IsMemberReadyOnly(getMemberByName(t, testType, "UID")))
 }
