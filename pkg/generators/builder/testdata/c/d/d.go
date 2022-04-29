@@ -6,4 +6,15 @@ import (
 
 type MockDeployment struct {
 	meta.TypeMeta
+	meta.ObjectMeta
+	Spec      MockSpec
+	Specs     []MockSpec
+	SpecNoGen MockSpecNoGen
+	Primitive bool
+}
+
+type MockSpec struct {
+}
+
+type MockSpecNoGen struct {
 }
