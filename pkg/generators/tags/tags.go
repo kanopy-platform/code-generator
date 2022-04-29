@@ -30,8 +30,8 @@ func IsTypeOptedOut(t *types.Type) bool {
 
 func IsPointerReceiver(t *types.Type) bool {
 	val := Extract(combineTypeComments(t), Receiver)
-	// default to Pointer Receiver if unspecified
-	return (val == ReceiverPointer) || (val == "")
+	defaultPointer := val == ""
+	return (val == ReceiverPointer) || defaultPointer
 }
 
 func IsValueReceiver(t *types.Type) bool {
