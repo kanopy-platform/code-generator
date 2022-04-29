@@ -106,12 +106,12 @@ func TestArgsForPointer(t *testing.T) {
 
 	tests := []struct {
 		description string
-		isPointer   bool
+		usePointer  bool
 		want        generator.Args
 	}{
 		{
 			description: "do not add in pointer args",
-			isPointer:   false,
+			usePointer:  false,
 			want: generator.Args{
 				"pointer":   "",
 				"ampersand": "",
@@ -119,7 +119,7 @@ func TestArgsForPointer(t *testing.T) {
 		},
 		{
 			description: "add in pointer args",
-			isPointer:   true,
+			usePointer:  true,
 			want: generator.Args{
 				"pointer":   "*",
 				"ampersand": "&",
@@ -129,7 +129,7 @@ func TestArgsForPointer(t *testing.T) {
 
 	for _, test := range tests {
 		args := generator.Args{}
-		argsForPointer(args, test.isPointer)
+		argsForPointer(args, test.usePointer)
 		assert.Equal(t, test.want, args, test.description)
 	}
 }

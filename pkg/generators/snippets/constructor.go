@@ -38,8 +38,8 @@ func New$.type|raw$(name string) $.pointer$$.type|raw$ {
 	return raw, args
 }
 
-func argsForPointer(args generator.Args, isPointer bool) {
-	if isPointer {
+func argsForPointer(args generator.Args, usePointer bool) {
+	if usePointer {
 		args["pointer"] = "*"
 		args["ampersand"] = "&"
 	} else {
