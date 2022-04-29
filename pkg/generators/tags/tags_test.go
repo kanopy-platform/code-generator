@@ -84,6 +84,12 @@ func TestValueReceiver(t *testing.T) {
 	assert.False(t, IsValueReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
 }
 
+func TestMemberReadyOnly(t *testing.T) {
+	testType := getTestPackage(t).Types["StructWithMemberComments"]
+	assert.False(t, IsMemberReadyOnly(getMemberByName(t, testType, "Name")))
+	assert.True(t, IsMemberReadyOnly(getMemberByName(t, testType, "UID")))
+}
+
 func getTestPackage(t *testing.T) *types.Package {
 	testDir := "./testdata/a"
 	d := args.Default()
@@ -95,4 +101,15 @@ func getTestPackage(t *testing.T) *types.Package {
 	findTypes, err := b.FindTypes()
 	assert.NoError(t, err)
 	return findTypes[testDir]
+}
+
+func getMemberByName(t *testing.T, inputType *types.Type, name string) types.Member {
+	for _, m := range inputType.Members {
+		if m.Name == name {
+			return m
+		}
+	}
+
+	t.Fatalf("failed to find %q in type %q", name, inputType)
+	return types.Member{}
 }
