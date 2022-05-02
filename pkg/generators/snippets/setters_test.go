@@ -264,7 +264,7 @@ func TestFuncName(t *testing.T) {
 func TestMemberAccessor(t *testing.T) {
 	t.Parallel()
 
-	testStruct := newTestType(t, "SomeStruct")
+	someStruct := newTestType(t, "SomeStruct")
 
 	tests := []struct {
 		description string
@@ -274,20 +274,20 @@ func TestMemberAccessor(t *testing.T) {
 	}{
 		{
 			description: "Root and Parent are the same, access member directly",
-			parent:      testStruct,
-			member:      getMemberFromType(t, testStruct, "MockStruct", "AStruct"),
+			parent:      someStruct,
+			member:      getMemberFromType(t, someStruct, "MockStruct", "AStruct"),
 			want:        "AStruct",
 		},
 		{
 			description: "Root and Parent are different, need intermediary to access member",
-			parent:      getMemberFromType(t, testStruct, "MockStruct", "ObjectMeta").Type,
-			member:      getMemberFromType(t, testStruct, "MockStruct", "ObjectMeta", "Name"),
+			parent:      getMemberFromType(t, someStruct, "MockStruct", "ObjectMeta").Type,
+			member:      getMemberFromType(t, someStruct, "MockStruct", "ObjectMeta", "Name"),
 			want:        "ObjectMeta.Name",
 		},
 	}
 
 	for _, test := range tests {
-		setter := NewSetter(testStruct, test.parent)
+		setter := NewSetter(someStruct, test.parent)
 		assert.Equal(t, test.want, setter.memberAccessor(test.member), test.description)
 	}
 }

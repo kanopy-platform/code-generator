@@ -109,7 +109,7 @@ func TestArgsForPointer(t *testing.T) {
 		want        generator.Args
 	}{
 		{
-			description: "do not add in pointer args",
+			description: "empty strings as pointer args",
 			usePointer:  false,
 			want: generator.Args{
 				"pointer":   "",
