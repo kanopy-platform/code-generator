@@ -100,26 +100,31 @@ func NewSomeStruct(name string) *SomeStruct {
 	}
 }
 
-func TestArgsForPointer(t *testing.T) {
+func TestDefaultGeneratorArgs(t *testing.T) {
 	t.Parallel()
+
+	valueStruct := newTestType(t, "ValueStruct")
+	someStruct := newTestType(t, "SomeStruct")
 
 	tests := []struct {
 		description string
-		usePointer  bool
+		testStruct  *types.Type
 		want        generator.Args
 	}{
 		{
-			description: "empty strings as pointer args",
-			usePointer:  false,
+			description: "value receiver",
+			testStruct:  valueStruct,
 			want: generator.Args{
+				"type":      valueStruct,
 				"pointer":   "",
 				"ampersand": "",
 			},
 		},
 		{
-			description: "add in pointer args",
-			usePointer:  true,
+			description: "pointer receiver",
+			testStruct:  someStruct,
 			want: generator.Args{
+				"type":      someStruct,
 				"pointer":   "*",
 				"ampersand": "&",
 			},
@@ -127,8 +132,7 @@ func TestArgsForPointer(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		args := generator.Args{}
-		argsForPointer(args, test.usePointer)
+		args := defaultGeneratorArgs(test.testStruct)
 		assert.Equal(t, test.want, args, test.description)
 	}
 }
