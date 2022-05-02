@@ -5,11 +5,13 @@ import (
 )
 
 // +kanopy:builder=true
+// +kanopy:receiver=pointer
 type CDeployment struct {
 	d.MockDeployment
 }
 
 // +kanopy:builder=true
+// +kanopy:receiver=value
 type MockSpec struct {
 	d.MockSpec
 }

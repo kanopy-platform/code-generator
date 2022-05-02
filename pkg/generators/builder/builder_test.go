@@ -120,7 +120,7 @@ func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
 
 	// constructor
-	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule") // TODO remove * on these once constructor/setter isPointerReceiver is added
+	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule") // TODO remove * on these once constructor/setter PR is merged
 	// no deepcopy
 	assert.NotContains(t, buf.String(), "DeepCopy()")
 	assert.NotContains(t, buf.String(), "DeepCopyInto")

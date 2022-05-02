@@ -106,8 +106,6 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
-	//isPointerReceiver := tags.IsPointerReceiver(t)
-
 	// generate constructor
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
