@@ -128,9 +128,9 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
 		objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
 		b.generateSettersForType(sw, t, objectMetaType)
-		b.generateSettersForType(sw, t, parentTypeOfObjectMeta)
-	} else {
-		b.generateSettersForType(sw, t, t.Members[0].Type)
+	}
+	for _, member := range t.Members {
+		b.generateSettersForType(sw, t, member.Type)
 	}
 
 	return sw.Error()
@@ -191,8 +191,8 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 
 func (b *BuilderPatternGenerator) getTypeEnabledForGeneration(t *types.Type) *types.Type {
 	typeName := t.Name.String()
-	if wrapper, ok := b.typesToGenerate[typeName]; ok {
-		return wrapper
+	if parent, ok := b.typesToGenerate[typeName]; ok {
+		return parent
 	}
 	return nil
 }
@@ -239,8 +239,8 @@ func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bo
 
 	for _, m := range t.Members {
 		if m.Embedded {
-			typeName := m.Type.Name.String()
-			b.typesToGenerate[typeName] = t
+			childType := m.Type.Name.String()
+			b.typesToGenerate[childType] = t
 		}
 	}
 

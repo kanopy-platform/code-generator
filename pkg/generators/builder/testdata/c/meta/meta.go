@@ -12,6 +12,3 @@ type ObjectMeta struct {
 	Finalizers []string
 	IntPtr     *int
 }
-
-type MockStruct struct {
-}

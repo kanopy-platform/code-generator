@@ -5,7 +5,6 @@ import (
 )
 
 // +kanopy:builder=true
-// +kanopy:receiver=pointer
 type CDeployment struct {
 	d.MockDeployment
 }
