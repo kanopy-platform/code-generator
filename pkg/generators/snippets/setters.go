@@ -8,19 +8,21 @@ import (
 )
 
 type Setter struct {
-	Root   *types.Type
-	Parent *types.Type
+	Root            *types.Type
+	Parent          *types.Type
+	pointerReceiver bool
 }
 
-func NewSetter(root, parent *types.Type) *Setter {
+func NewSetter(root, parent *types.Type, pointerReceiver bool) *Setter {
 	return &Setter{
-		Root:   root,
-		Parent: parent,
+		Root:            root,
+		Parent:          parent,
+		pointerReceiver: pointerReceiver,
 	}
 }
 
 func (s *Setter) GenerateSetterForPrimitiveType(member types.Member) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["memberType"] = member.Type
@@ -36,7 +38,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in $.memberType|raw$) $.pointer$$.typ
 }
 
 func (s *Setter) GenerateSetterForMap(member types.Member) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["memberType"] = member.Type
@@ -52,7 +54,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in $.memberType|raw$) $.pointer$$.typ
 }
 
 func (s *Setter) GenerateSetterForMemberSlice(member types.Member) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["memberType"] = member.Type.Elem
@@ -68,7 +70,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in ...$.memberType|raw$) $.pointer$$.
 }
 
 func (s *Setter) GenerateSetterForEmbeddedSlice(member types.Member, inputType *types.Type) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["inputType"] = inputType
@@ -87,7 +89,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in ...$.inputType|raw$) $.pointer$$.t
 }
 
 func (s *Setter) GenerateSetterForMemberStruct(member types.Member) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["memberType"] = member.Type
@@ -103,7 +105,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in $.memberType|raw$) $.pointer$$.typ
 }
 
 func (s *Setter) GenerateSetterForEmbeddedStruct(member types.Member, inputType *types.Type) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["inputType"] = inputType
@@ -120,7 +122,7 @@ func (o $.pointer$$.type|raw$) $.funcName$(in $.inputType|raw$) $.pointer$$.type
 }
 
 func (s *Setter) GenerateSetterForPointerToBuiltinType(member types.Member) (string, generator.Args) {
-	args := defaultGeneratorArgs(s.Root)
+	args := defaultGeneratorArgs(s.Root, s.pointerReceiver)
 	args["funcName"] = funcName(member)
 	args["memberAccessor"] = s.memberAccessor(member)
 	args["memberElemType"] = member.Type.Elem

@@ -4,7 +4,7 @@ import (
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets/testdata/b"
 )
 
-type MockStruct struct {
+type SomeStruct struct {
 	b.TypeMeta
 	b.ObjectMeta
 	AStruct  AStruct

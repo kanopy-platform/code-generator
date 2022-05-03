@@ -4,14 +4,8 @@ import (
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets/testdata/a"
 )
 
-// +kanopy:receiver=pointer
 type SomeStruct struct {
-	a.MockStruct
-}
-
-// +kanopy:receiver=value
-type ValueStruct struct {
-	a.MockStruct
+	a.SomeStruct
 }
 
 type CStruct struct {
