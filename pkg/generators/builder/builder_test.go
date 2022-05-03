@@ -108,6 +108,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	// setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in MockSpec) *CDeployment")
 }
 
 func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
@@ -120,7 +121,7 @@ func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
 
 	// constructor
-	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule") // TODO remove * on these once constructor/setter PR is merged
+	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule")
 	// no deepcopy
 	assert.NotContains(t, buf.String(), "DeepCopy()")
 	assert.NotContains(t, buf.String(), "DeepCopyInto")
