@@ -7,13 +7,10 @@ import (
 )
 
 const (
-	Builder         = "kanopy:builder"
-	BuilderPackage  = "package"
-	BuilderOptIn    = "true"
-	BuilderOptOut   = "false"
-	Receiver        = "kanopy:receiver"
-	ReceiverPointer = "pointer"
-	ReceiverValue   = "value"
+	Builder        = "kanopy:builder"
+	BuilderPackage = "package"
+	BuilderOptIn   = "true"
+	BuilderOptOut  = "false"
 )
 
 func IsPackageTagged(comments []string) bool {
@@ -26,16 +23,6 @@ func IsTypeEnabled(t *types.Type) bool {
 
 func IsTypeOptedOut(t *types.Type) bool {
 	return Extract(combineTypeComments(t), Builder) == BuilderOptOut
-}
-
-func IsPointerReceiver(t *types.Type) bool {
-	val := Extract(combineTypeComments(t), Receiver)
-	defaultPointer := val == ""
-	return (val == ReceiverPointer) || defaultPointer
-}
-
-func IsValueReceiver(t *types.Type) bool {
-	return Extract(combineTypeComments(t), Receiver) == ReceiverValue
 }
 
 func IsMemberReadyOnly(m types.Member) bool {

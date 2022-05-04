@@ -48,12 +48,6 @@ func TestExtractCommentTag(t *testing.T) {
 			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value,value2")},
 			want:        "value",
 		},
-		{
-			description: "Receiver tag",
-			tag:         Receiver,
-			comments:    []string{fmt.Sprintf(fmtTag, Receiver, "pointer")},
-			want:        "pointer",
-		},
 	}
 
 	for _, test := range tests {
@@ -71,17 +65,6 @@ func TestTypeOptOut(t *testing.T) {
 
 func TestAllPackageTypes(t *testing.T) {
 	assert.True(t, IsPackageTagged(getTestPackage(t).Comments))
-}
-
-func TestPointerReceiver(t *testing.T) {
-	assert.True(t, IsPointerReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
-	assert.True(t, IsPointerReceiver(getTestPackage(t).Types["PointerReceiver"]))
-	assert.False(t, IsPointerReceiver(getTestPackage(t).Types["ValueReceiver"]))
-}
-
-func TestValueReceiver(t *testing.T) {
-	assert.True(t, IsValueReceiver(getTestPackage(t).Types["ValueReceiver"]))
-	assert.False(t, IsValueReceiver(getTestPackage(t).Types["UnspecifiedReceiver"]))
 }
 
 func TestMemberReadyOnly(t *testing.T) {
