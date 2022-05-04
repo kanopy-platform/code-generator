@@ -10,7 +10,6 @@ type CDeployment struct {
 }
 
 // +kanopy:builder=true
-// +kanopy:receiver=value
 type MockSpec struct {
 	d.MockSpec
 }

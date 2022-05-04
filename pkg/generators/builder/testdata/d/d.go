@@ -5,7 +5,6 @@ import (
 )
 
 // +kanopy:builder=true
-// +kanopy:receiver=value
 type DPolicyRule struct {
 	e.MockPolicyRule
 }

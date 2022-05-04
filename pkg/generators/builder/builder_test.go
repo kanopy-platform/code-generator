@@ -108,7 +108,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	// setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in MockSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")
 }
 
 func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
@@ -147,8 +147,8 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendFinalizers(in ...string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
 	// Spec setters
-	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in MockSpec) *CDeployment")
-	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendSpecs(in ...MockSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendSpecs(in ...*MockSpec) *CDeployment")
 	assert.NotContains(t, buf.String(), "SpecNoGen")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithPrimitive(in bool) *CDeployment")
 }

@@ -113,7 +113,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		b.imports.AddType(getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta"))
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
 	} else {
-		sw.Do(snippets.GenerateEmptyConstructor(t))
+		sw.Do(snippets.GenerateEmptyConstructor(t, true))
 	}
 
 	if hasTypeMetaEmbedded(t) {
@@ -137,7 +137,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 }
 
 func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWriter, root *types.Type, parent *types.Type) {
-	setter := snippets.NewSetter(root, parent)
+	setter := snippets.NewSetter(root, parent, true)
 
 	for _, m := range parent.Members {
 		if m.Embedded || tags.IsMemberReadyOnly(m) {
