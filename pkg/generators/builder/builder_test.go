@@ -123,7 +123,7 @@ func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
 	// constructor
 	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule")
 	// no deepcopy
-	assert.NotContains(t, buf.String(), "DeepCopy()")
+	assert.NotContains(t, buf.String(), "DeepCopy")
 	assert.NotContains(t, buf.String(), "DeepCopyInto")
 	// setters
 	assert.Contains(t, buf.String(), "func (o *DPolicyRule) AppendVerbs(in ...string) *DPolicyRule")

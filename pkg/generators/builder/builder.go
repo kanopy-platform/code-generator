@@ -108,25 +108,25 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	// generate constructor
 	if hasObjectMetaEmbedded(t) {
-		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
+		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta)
 		b.imports.AddType(parentTypeOfObjectMeta)
-		b.imports.AddType(getMemberTypeFromType(parentTypeOfObjectMeta, "ObjectMeta"))
+		b.imports.AddType(getMemberTypeFromType(parentTypeOfObjectMeta, ObjectMeta))
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
 	} else {
 		sw.Do(snippets.GenerateEmptyConstructor(t, true))
 	}
 
 	if hasTypeMetaEmbedded(t) {
-		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, "TypeMeta")
+		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, TypeMeta)
 		b.imports.AddType(parentTypeOfTypeMeta)
-		b.imports.AddType(getMemberTypeFromType(parentTypeOfTypeMeta, "TypeMeta"))
+		b.imports.AddType(getMemberTypeFromType(parentTypeOfTypeMeta, TypeMeta))
 		sw.Do(snippets.GenerateDeepCopy(t))
 	}
 
 	// generate setters for struct
 	if hasObjectMetaEmbedded(t) {
-		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
-		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, "ObjectMeta")
+		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta)
+		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, ObjectMeta)
 		b.generateSettersForType(sw, t, objectMetaType)
 	}
 	for _, member := range t.Members {
@@ -198,14 +198,14 @@ func (b *BuilderPatternGenerator) getTypeEnabledForGeneration(t *types.Type) *ty
 }
 
 func hasTypeMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfEmbeddedType(t, "TypeMeta"); p != nil {
+	if p := getParentOfEmbeddedType(t, TypeMeta); p != nil {
 		return true
 	}
 	return false
 }
 
 func hasObjectMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfEmbeddedType(t, "ObjectMeta"); p != nil {
+	if p := getParentOfEmbeddedType(t, ObjectMeta); p != nil {
 		return true
 	}
 	return false
