@@ -144,7 +144,7 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	// ObjectMeta setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithLabels(in map[string]string) *CDeployment")
-	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendFinalizers(in ...string) *CDeployment")
+	assert.NotContains(t, buf.String(), "AppendFinalizers")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
 	// Spec setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")

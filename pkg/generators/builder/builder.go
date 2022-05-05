@@ -110,7 +110,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
 		b.imports.AddType(parentTypeOfObjectMeta)
-		b.imports.AddType(getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta"))
+		b.imports.AddType(getMemberTypeFromType(parentTypeOfObjectMeta, "ObjectMeta"))
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
 	} else {
 		sw.Do(snippets.GenerateEmptyConstructor(t, true))
@@ -119,14 +119,14 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	if hasTypeMetaEmbedded(t) {
 		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, "TypeMeta")
 		b.imports.AddType(parentTypeOfTypeMeta)
-		b.imports.AddType(getMemberFromType(parentTypeOfTypeMeta, "TypeMeta"))
+		b.imports.AddType(getMemberTypeFromType(parentTypeOfTypeMeta, "TypeMeta"))
 		sw.Do(snippets.GenerateDeepCopy(t))
 	}
 
 	// generate setters for struct
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, "ObjectMeta")
-		objectMetaType := getMemberFromType(parentTypeOfObjectMeta, "ObjectMeta")
+		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, "ObjectMeta")
 		b.generateSettersForType(sw, t, objectMetaType)
 	}
 	for _, member := range t.Members {
@@ -140,7 +140,7 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 	setter := snippets.NewSetter(root, parent, true)
 
 	for _, m := range parent.Members {
-		if m.Embedded || tags.IsMemberReadyOnly(m) {
+		if m.Embedded || !includeMember(parent, m) {
 			continue
 		}
 
@@ -214,7 +214,7 @@ func hasObjectMetaEmbedded(t *types.Type) bool {
 func getParentOfEmbeddedType(t *types.Type, name string) *types.Type {
 	for _, m := range t.Members {
 		if m.Embedded {
-			if mm := getMemberFromType(m.Type, name); mm != nil {
+			if mm := getMemberTypeFromType(m.Type, name); mm != nil {
 				return m.Type
 			}
 		}
@@ -222,7 +222,16 @@ func getParentOfEmbeddedType(t *types.Type, name string) *types.Type {
 	return nil
 }
 
-func getMemberFromType(t *types.Type, name string) *types.Type {
+func getMemberFromType(t *types.Type, name string) types.Member {
+	for _, mm := range t.Members {
+		if mm.Name == name {
+			return mm
+		}
+	}
+	return types.Member{}
+}
+
+func getMemberTypeFromType(t *types.Type, name string) *types.Type {
 	for _, mm := range t.Members {
 		if mm.Name == name {
 			return mm.Type

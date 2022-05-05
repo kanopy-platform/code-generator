@@ -11,4 +11,6 @@ type ObjectMeta struct {
 	Labels     map[string]string
 	Finalizers []string
 	IntPtr     *int
+	// Read-only.
+	ReadOnlyMember *string
 }
