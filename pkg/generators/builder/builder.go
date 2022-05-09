@@ -136,6 +136,9 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	return sw.Error()
 }
 
+// generateSettersForType generates setter methods for the root type.
+// If root and parent are the same, setters are generated for members of the root type.
+// If parent is a nested member of root, setters are generated for members of parent.
 func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWriter, root *types.Type, parent *types.Type) {
 	setter := snippets.NewSetter(root, parent, true)
 
@@ -144,10 +147,10 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			continue
 		}
 
-		switch m.Type.Kind {
-		case types.Map:
+		switch {
+		case m.Type.Kind == types.Map:
 			sw.Do(setter.GenerateSetterForMap(m))
-		case types.Slice:
+		case m.Type.Kind == types.Slice:
 			sliceType := m.Type.Elem
 			switch sliceType.Kind {
 			case types.Struct:
@@ -158,18 +161,13 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			default:
 				sw.Do(setter.GenerateSetterForMemberSlice(m))
 			}
-		case types.Struct:
+		case m.Type.Kind == types.Struct:
 			// skip adding setters for un-enabled structs
 			if inputType := b.getTypeEnabledForGeneration(m.Type); inputType != nil {
 				sw.Do(setter.GenerateSetterForEmbeddedStruct(m, inputType))
 			}
-		case types.Pointer:
-			switch m.Type.Elem.Kind {
-			case types.Builtin:
-				sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
-			default:
-				sw.Do(setter.GenerateSetterForPrimitiveType(m))
-			}
+		case m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin:
+			sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
 		default:
 			sw.Do(setter.GenerateSetterForPrimitiveType(m))
 		}
@@ -194,6 +192,10 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 	return v
 }
 
+// getTypeEnabledForGeneration checks if a member struct type has been explicitly enabled
+// for code generation.
+// If enabled, it returns the wrapper type that embeds it.
+// Returns nil if type generation is disabled.
 func (b *BuilderPatternGenerator) getTypeEnabledForGeneration(t *types.Type) *types.Type {
 	typeName := t.Name.String()
 	if parent, ok := b.typesToGenerate[typeName]; ok {
