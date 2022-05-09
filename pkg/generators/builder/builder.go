@@ -144,11 +144,11 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			continue
 		}
 
-		if m.Type.Kind == types.Map {
+		switch m.Type.Kind {
+		case types.Map:
 			sw.Do(setter.GenerateSetterForMap(m))
-		} else if m.Type.Kind == types.Slice {
+		case types.Slice:
 			sliceType := m.Type.Elem
-
 			switch sliceType.Kind {
 			case types.Struct:
 				// skip adding setters for un-enabled structs
@@ -158,14 +158,19 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			default:
 				sw.Do(setter.GenerateSetterForMemberSlice(m))
 			}
-		} else if m.Type.Kind == types.Struct {
+		case types.Struct:
 			// skip adding setters for un-enabled structs
 			if inputType := b.getTypeEnabledForGeneration(m.Type); inputType != nil {
 				sw.Do(setter.GenerateSetterForEmbeddedStruct(m, inputType))
 			}
-		} else if m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin {
-			sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
-		} else {
+		case types.Pointer:
+			switch m.Type.Elem.Kind {
+			case types.Builtin:
+				sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+			default:
+				sw.Do(setter.GenerateSetterForPrimitiveType(m))
+			}
+		default:
 			sw.Do(setter.GenerateSetterForPrimitiveType(m))
 		}
 	}
