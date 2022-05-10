@@ -8,3 +8,8 @@ import (
 type CDeployment struct {
 	d.MockDeployment
 }
+
+// +kanopy:builder=true
+type MockSpec struct {
+	d.MockSpec
+}
