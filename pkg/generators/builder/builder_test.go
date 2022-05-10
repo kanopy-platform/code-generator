@@ -103,12 +103,12 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 
 	// constructor
 	assert.Contains(t, buf.String(), "func NewCDeployment(name string) *CDeployment")
-	// deepcopy
-	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
-	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 	// setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithName(in string) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")
+	// deepcopy
+	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopy() *CDeployment")
+	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 }
 
 func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
@@ -122,12 +122,12 @@ func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
 
 	// constructor
 	assert.Contains(t, buf.String(), "func NewDPolicyRule() *DPolicyRule")
-	// no deepcopy
-	assert.NotContains(t, buf.String(), "DeepCopy")
-	assert.NotContains(t, buf.String(), "DeepCopyInto")
 	// setters
 	assert.Contains(t, buf.String(), "func (o *DPolicyRule) AppendVerbs(in ...string) *DPolicyRule")
 	assert.Contains(t, buf.String(), "func (o *DPolicyRule) AppendListOfInts(in ...int) *DPolicyRule")
+	// no deepcopy
+	assert.NotContains(t, buf.String(), "DeepCopy")
+	assert.NotContains(t, buf.String(), "DeepCopyInto")
 }
 
 func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
