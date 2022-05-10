@@ -106,7 +106,6 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
-	// generate constructor and setters
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta)
 		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, ObjectMeta)
@@ -122,7 +121,6 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		b.generateSettersForType(sw, t, member.Type)
 	}
 
-	// generate deepcopy
 	if hasTypeMetaEmbedded(t) {
 		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, TypeMeta)
 		b.imports.AddType(parentTypeOfTypeMeta)
