@@ -47,12 +47,11 @@ Implements the [gengo](https://github.com/kubernetes/gengo) [generator.Generator
 
 ### pkg/generators/snippets
 
-Defines individual code template snippets used by the builder.
+Defines individual template snippets used by the builder.
 
 ### pkg/generators/tags
 
-Common functions to parse  information from the comment tags supported by this generator.
-
+Common functions to parse comment tags supported by this generator.
 
 ## Supported Comment Tags
 
