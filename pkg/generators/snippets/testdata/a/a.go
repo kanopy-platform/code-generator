@@ -11,6 +11,7 @@ type SomeStruct struct {
 	CStruct            CStruct
 	CStructs           []CStruct
 	Strings            []string
+	Bytes              []byte
 	IntPtr             *int
 	MapIntString       map[int]string
 	MapStringByteSlice map[string][]byte
