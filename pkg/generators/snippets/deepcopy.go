@@ -27,7 +27,7 @@ func (in *$.type|raw$) DeepCopyInto(out *$.type|raw$) {
 	in.$.type|raw$.DeepCopyInto(&out.$.type|raw$)`
 
 	for _, m := range t.Members {
-		if m.Type.Kind == "Struct" {
+		if m.Type.Kind == types.Struct {
 			if hasDeepCopyIntoMethod(m.Type) {
 				raw = fmt.Sprintf("%s\n\tin.%s.DeepCopyInto(&out.%s)", raw, m.Name, m.Name)
 			}
