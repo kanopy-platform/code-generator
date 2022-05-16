@@ -31,6 +31,12 @@ steps:
       limits:
         memory: 512MiB
 
+  - name: license-check
+    image: public.ecr.aws/kanopy/licensed-go:3.4.4
+    commands:
+      - licensed cache
+      - licensed status
+
   - name: snyk
     image: snyk/snyk:golang-1.14
     environment:
