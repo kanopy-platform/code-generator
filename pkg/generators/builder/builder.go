@@ -203,19 +203,19 @@ func (b *BuilderPatternGenerator) isTypeEnabled(t *types.Type) bool {
 	return exists
 }
 
-func hasTypeMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfEmbeddedType(t, TypeMeta); p != nil {
-		return true
-	}
-	return false
-}
-
 func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 	typeName := t.Name.String()
 	if parent, ok := b.enabledTypes[typeName]; ok {
 		return parent
 	}
 	return nil
+}
+
+func hasTypeMetaEmbedded(t *types.Type) bool {
+	if p := getParentOfEmbeddedType(t, TypeMeta); p != nil {
+		return true
+	}
+	return false
 }
 
 func hasObjectMetaEmbedded(t *types.Type) bool {
