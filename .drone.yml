@@ -38,7 +38,7 @@ steps:
       - licensed status
 
   - name: snyk
-    image: snyk/snyk:golang-1.14
+    image: snyk/snyk:golang-1.16
     environment:
       SNYK_TOKEN:
         from_secret: snyk_token
