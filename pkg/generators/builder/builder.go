@@ -112,7 +112,6 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		b.imports.AddType(parentTypeOfObjectMeta)
 		b.imports.AddType(objectMetaType)
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
-		sw.Do(snippets.GenerateDeepCopy(t))
 		b.generateSettersForType(sw, t, objectMetaType)
 	} else {
 		sw.Do(snippets.GenerateEmptyConstructor(t, true))
@@ -120,6 +119,13 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	for _, member := range t.Members {
 		b.generateSettersForType(sw, t, member.Type)
+	}
+
+	if hasTypeMetaEmbedded(t) {
+		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, TypeMeta)
+		b.imports.AddType(parentTypeOfTypeMeta)
+		b.imports.AddType(getMemberTypeFromType(parentTypeOfTypeMeta, TypeMeta))
+		sw.Do(snippets.GenerateDeepCopy(t))
 	}
 
 	return sw.Error()
@@ -195,6 +201,13 @@ func (b *BuilderPatternGenerator) isTypeEnabled(t *types.Type) bool {
 	typeName := t.Name.String()
 	_, exists := b.enabledTypes[typeName]
 	return exists
+}
+
+func hasTypeMetaEmbedded(t *types.Type) bool {
+	if p := getParentOfEmbeddedType(t, TypeMeta); p != nil {
+		return true
+	}
+	return false
 }
 
 func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {

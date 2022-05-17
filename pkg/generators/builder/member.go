@@ -7,6 +7,7 @@ import (
 
 const (
 	ObjectMeta = "ObjectMeta"
+	TypeMeta   = "TypeMeta"
 )
 
 func includeMember(parent *types.Type, member types.Member) bool {
