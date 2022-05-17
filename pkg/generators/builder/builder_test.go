@@ -76,6 +76,7 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 		assert.Equal(t, test.wantGen, g.Filter(c, typeToGenerate), test.description)
 	}
 }
+
 func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
 	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	assert.True(t, hasTypeMetaEmbedded(typeToGenerate))
@@ -148,8 +149,10 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
 	// Spec setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithPointerSpec(in *MockSpec) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendSpecs(in ...*MockSpec) *CDeployment")
 	assert.NotContains(t, buf.String(), "SpecNoGen")
+	assert.NotContains(t, buf.String(), "PointerSpecNoGen")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithPrimitive(in bool) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithMapStringByteSlice(in map[string][]byte) *CDeployment")
 }
