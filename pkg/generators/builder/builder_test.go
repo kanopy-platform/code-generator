@@ -77,11 +77,6 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 	}
 }
 
-func TestBuilderPattern_TypeContainTypeMeta(t *testing.T) {
-	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	assert.True(t, hasTypeMetaEmbedded(typeToGenerate))
-}
-
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 	tracker := newImportTracker()
 	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
@@ -91,7 +86,7 @@ func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 	assert.Equal(t, "cd", golangNameToImportAlias(tracker, typeToGenerate.Name))
 }
 
-func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
+func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	_, specTypeToGenerate := newTestGeneratorType(t, "c", "MockSpec")
@@ -112,7 +107,7 @@ func TestBuilderPattern_TypeMetaGeneratesSnippets(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (in *CDeployment) DeepCopyInto(out *CDeployment)")
 }
 
-func TestBuilderPattern_NonTypeMetaGeneratesSnippets(t *testing.T) {
+func TestBuilderPattern_NonObjectMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
 	g := b.NewBuilder(pkg)
@@ -157,7 +152,7 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithMapStringByteSlice(in map[string][]byte) *CDeployment")
 }
 
-func TestBuilderPattern_TypeMetaGeneratesImportLines(t *testing.T) {
+func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	g := b.NewBuilder(pkg)
