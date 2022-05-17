@@ -149,6 +149,7 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithIntPtr(in int) *CDeployment")
 	// Spec setters
 	assert.Contains(t, buf.String(), "func (o *CDeployment) WithSpec(in *MockSpec) *CDeployment")
+	assert.Contains(t, buf.String(), "func (o *CDeployment) WithPointerSpec(in *MockSpec) *CDeployment")
 	assert.Contains(t, buf.String(), "func (o *CDeployment) AppendSpecs(in ...*MockSpec) *CDeployment")
 	assert.NotContains(t, buf.String(), "SpecNoGen")
 	assert.NotContains(t, buf.String(), "PointerSpecNoGen")

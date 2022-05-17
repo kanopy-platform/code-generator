@@ -8,6 +8,7 @@ type MockDeployment struct {
 	meta.TypeMeta
 	meta.ObjectMeta
 	Spec               MockSpec
+	PointerSpec        *MockSpec
 	Specs              []MockSpec
 	SpecNoGen          MockSpecNoGen
 	PointerSpecNoGen   *MockSpecNoGen
