@@ -155,10 +155,20 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			if b.isTypeEnabled(m.Type) {
 				sw.Do(setter.GenerateSetterForEmbeddedStruct(m, b.getWrapperType(m.Type)))
 			}
-		case m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin:
-			sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+		case m.Type.Kind == types.Pointer:
+			pointerType := m.Type.Elem
+			switch pointerType.Kind {
+			case types.Builtin:
+				sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+			case types.Struct:
+				if b.isTypeEnabled(pointerType) {
+					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
+				}
+			default:
+				sw.Do(setter.GenerateSetterForType(m))
+			}
 		default:
-			sw.Do(setter.GenerateSetterForPrimitiveType(m))
+			sw.Do(setter.GenerateSetterForType(m))
 		}
 	}
 }

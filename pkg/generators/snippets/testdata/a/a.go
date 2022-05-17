@@ -9,6 +9,7 @@ type SomeStruct struct {
 	b.ObjectMeta
 	AStruct            AStruct
 	CStruct            CStruct
+	PointerCStruct     *CStruct
 	CStructs           []CStruct
 	Strings            []string
 	Bytes              []byte
