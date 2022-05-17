@@ -10,6 +10,7 @@ type MockDeployment struct {
 	Spec               MockSpec
 	Specs              []MockSpec
 	SpecNoGen          MockSpecNoGen
+	PointerSpecNoGen   *MockSpecNoGen
 	Primitive          bool
 	MapStringByteSlice map[string][]byte
 }
