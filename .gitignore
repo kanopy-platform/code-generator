@@ -1,1 +1,5 @@
-bin
+bin/
+dist/
+*.swp
+coverage.out
+.licenses
