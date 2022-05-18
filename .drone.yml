@@ -38,7 +38,7 @@ steps:
       - licensed status
 
   - name: snyk
-    image: snyk/snyk:golang-1.16
+    image: snyk/snyk:golang-1.17
     environment:
       SNYK_TOKEN:
         from_secret: snyk_token
@@ -65,7 +65,7 @@ steps:
 
   # tag a new release
   - name: dist
-    image: golang:1.16
+    image: golang:1.17
     commands:
       - make dist
     when:
