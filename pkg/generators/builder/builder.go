@@ -112,6 +112,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		b.imports.AddType(parentTypeOfObjectMeta)
 		b.imports.AddType(objectMetaType)
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
+		sw.Do(snippets.GenerateDeepCopy(t))
 		b.generateSettersForType(sw, t, objectMetaType)
 	} else {
 		sw.Do(snippets.GenerateEmptyConstructor(t, true))
@@ -119,13 +120,6 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	for _, member := range t.Members {
 		b.generateSettersForType(sw, t, member.Type)
-	}
-
-	if hasTypeMetaEmbedded(t) {
-		parentTypeOfTypeMeta := getParentOfEmbeddedType(t, TypeMeta)
-		b.imports.AddType(parentTypeOfTypeMeta)
-		b.imports.AddType(getMemberTypeFromType(parentTypeOfTypeMeta, TypeMeta))
-		sw.Do(snippets.GenerateDeepCopy(t))
 	}
 
 	return sw.Error()
@@ -141,7 +135,12 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 
 		switch {
 		case m.Type.Kind == types.Map:
-			sw.Do(setter.GenerateSetterForMap(m))
+			switch parent.Name.Name {
+			case ObjectMeta:
+				sw.Do(setter.GenerateSetterForMapStringString(m))
+			default:
+				sw.Do(setter.GenerateSetterForMap(m))
+			}
 		case m.Type.Kind == types.Slice:
 			sliceType := m.Type.Elem
 			switch sliceType.Kind {
@@ -156,10 +155,20 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			if b.isTypeEnabled(m.Type) {
 				sw.Do(setter.GenerateSetterForEmbeddedStruct(m, b.getWrapperType(m.Type)))
 			}
-		case m.Type.Kind == types.Pointer && m.Type.Elem.Kind == types.Builtin:
-			sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+		case m.Type.Kind == types.Pointer:
+			pointerType := m.Type.Elem
+			switch pointerType.Kind {
+			case types.Builtin:
+				sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+			case types.Struct:
+				if b.isTypeEnabled(pointerType) {
+					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
+				}
+			default:
+				sw.Do(setter.GenerateSetterForType(m))
+			}
 		default:
-			sw.Do(setter.GenerateSetterForPrimitiveType(m))
+			sw.Do(setter.GenerateSetterForType(m))
 		}
 	}
 }
@@ -194,13 +203,6 @@ func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 		return parent
 	}
 	return nil
-}
-
-func hasTypeMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfEmbeddedType(t, TypeMeta); p != nil {
-		return true
-	}
-	return false
 }
 
 func hasObjectMetaEmbedded(t *types.Type) bool {

@@ -7,10 +7,13 @@ import (
 type MockDeployment struct {
 	meta.TypeMeta
 	meta.ObjectMeta
-	Spec      MockSpec
-	Specs     []MockSpec
-	SpecNoGen MockSpecNoGen
-	Primitive bool
+	Spec               MockSpec
+	PointerSpec        *MockSpec
+	Specs              []MockSpec
+	SpecNoGen          MockSpecNoGen
+	PointerSpecNoGen   *MockSpecNoGen
+	Primitive          bool
+	MapStringByteSlice map[string][]byte
 }
 
 type MockSpec struct {
