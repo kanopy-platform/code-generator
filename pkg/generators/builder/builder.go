@@ -135,8 +135,10 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 
 		switch {
 		case m.Type.Kind == types.Map:
-			switch parent.Name.Name {
-			case ObjectMeta:
+			keyType := m.Type.Key
+			elemType := m.Type.Elem
+			switch {
+			case keyType == types.String && elemType == types.String:
 				sw.Do(setter.GenerateSetterForMapStringString(m))
 			default:
 				sw.Do(setter.GenerateSetterForMap(m))
