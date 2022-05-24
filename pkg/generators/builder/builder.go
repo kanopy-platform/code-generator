@@ -98,6 +98,8 @@ func pathToLegalGoName(in string) string {
 func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error {
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 	sw.Do(snippets.GenerateMergeMapStringString(), nil)
+	sw.Do(snippets.GenerateVariadicBool(), nil)
+	sw.Do(snippets.GenerateBoolPointer(), nil)
 	return sw.Error()
 }
 
@@ -161,7 +163,11 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			pointerType := m.Type.Elem
 			switch pointerType.Kind {
 			case types.Builtin:
-				sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+				if pointerType == types.Bool {
+					sw.Do(setter.GenerateSetterForPointerToBool(m))
+				} else {
+					sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
+				}
 			case types.Struct:
 				if b.isTypeEnabled(pointerType) {
 					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
@@ -169,6 +175,8 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			default:
 				sw.Do(setter.GenerateSetterForType(m))
 			}
+		case m.Type == types.Bool:
+			sw.Do(setter.GenerateSetterForBool(m))
 		default:
 			sw.Do(setter.GenerateSetterForType(m))
 		}

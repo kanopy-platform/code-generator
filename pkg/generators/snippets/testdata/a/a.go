@@ -16,6 +16,8 @@ type SomeStruct struct {
 	IntPtr             *int
 	MapIntString       map[int]string
 	MapStringByteSlice map[string][]byte
+	Bool               bool
+	PointerBool        *bool
 }
 
 type AStruct struct {
