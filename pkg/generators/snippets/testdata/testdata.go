@@ -22,6 +22,8 @@ type ComplexStruct struct {
 	IntPtr  *int
 }
 
+type Alias b.AliasOfString
+
 func (c *ComplexStruct) DeepCopyInto(in *ComplexStruct) {
 	// not impl test only
 }

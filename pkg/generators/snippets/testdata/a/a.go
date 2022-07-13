@@ -18,6 +18,7 @@ type SomeStruct struct {
 	MapStringByteSlice map[string][]byte
 	Bool               bool
 	PointerBool        *bool
+	Alias              *b.AliasOfString
 }
 
 type AStruct struct {

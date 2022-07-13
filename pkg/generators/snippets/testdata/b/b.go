@@ -5,6 +5,8 @@ type TypeMeta struct {
 	APIVersion string
 }
 
+type AliasOfString string
+
 type ObjectMeta struct {
 	Name   string
 	Labels map[string]string

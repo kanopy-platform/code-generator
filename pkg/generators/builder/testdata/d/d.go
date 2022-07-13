@@ -8,3 +8,6 @@ import (
 type DPolicyRule struct {
 	e.MockPolicyRule
 }
+
+// +kanopy:builder=true
+type AliasType e.AliasToString

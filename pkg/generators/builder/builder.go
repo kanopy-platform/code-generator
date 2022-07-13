@@ -108,6 +108,11 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
+	if t.IsPrimitive() {
+		log.Infof("skipping primitive type: %s", t.Name.Name)
+		return nil
+	}
+
 	if hasObjectMetaEmbedded(t) {
 		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta)
 		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, ObjectMeta)
@@ -172,6 +177,10 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 				if b.isTypeEnabled(pointerType) {
 					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
 				}
+			case types.Alias:
+				if b.isTypePrimitiveEnabled(m) {
+					sw.Do(setter.GenerateSetterForAliasPointerPrimitive(m, m.Type))
+				}
 			default:
 				sw.Do(setter.GenerateSetterForType(m))
 			}
@@ -203,6 +212,12 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 
 func (b *BuilderPatternGenerator) isTypeEnabled(t *types.Type) bool {
 	typeName := t.Name.String()
+	_, exists := b.enabledTypes[typeName]
+	return exists
+}
+
+func (b *BuilderPatternGenerator) isTypePrimitiveEnabled(t types.Member) bool {
+	typeName := t.Name
 	_, exists := b.enabledTypes[typeName]
 	return exists
 }
@@ -257,14 +272,26 @@ func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bo
 		return false
 	}
 
+	b.enablePrimitiveType(t)
+
 	for _, m := range t.Members {
-		if m.Embedded {
-			childType := m.Type.Name.String()
-			b.enabledTypes[childType] = t
-		}
+		b.enableEmbededMemberType(m, t)
 	}
 
 	return true
+}
+
+func (b *BuilderPatternGenerator) enableEmbededMemberType(m types.Member, t *types.Type) {
+	if m.Embedded {
+		childType := m.Type.Name.String()
+		b.enabledTypes[childType] = t
+	}
+}
+
+func (b *BuilderPatternGenerator) enablePrimitiveType(t *types.Type) {
+	if t.IsPrimitive() {
+		b.enabledTypes[t.Name.Name] = t
+	}
 }
 
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {
