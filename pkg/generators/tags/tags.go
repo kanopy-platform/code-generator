@@ -27,7 +27,7 @@ func IsTypeOptedOut(t *types.Type) bool {
 
 func IsMemberReadyOnly(m types.Member) bool {
 	for _, s := range m.CommentLines {
-		if strings.Contains(s, "Read-only") {
+		if strings.Contains(strings.ToLower(s), "read-only") {
 			return true
 		}
 	}

@@ -24,10 +24,17 @@ func TestIncludeMember(t *testing.T) {
 			want:         true,
 		},
 		{
-			description:  "should not include Read-only member",
+			description:  "should not include member labeled Read-only",
 			dir:          "c/meta",
 			typeSelector: "ObjectMeta",
 			member:       "ReadOnlyMember",
+			want:         false,
+		},
+		{
+			description:  "should not include member labeled read-only (lowercase)",
+			dir:          "c/meta",
+			typeSelector: "ObjectMeta",
+			member:       "ReadOnlyLowerCase",
 			want:         false,
 		},
 	}
