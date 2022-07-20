@@ -13,4 +13,6 @@ type ObjectMeta struct {
 	IntPtr     *int
 	// Read-only.
 	ReadOnlyMember *string
+	// Bla bla read-only
+	ReadOnlyLowerCase int
 }

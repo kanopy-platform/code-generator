@@ -114,7 +114,7 @@ All kubernetes runtime types have the following in common. They embed [ObjectMet
 - Given a type with ObjectMeta
   - generate a Constructor that accepts the name of the resources
   - generate DeepCopy and DeepCopyInto wrappers of the parent type
-  - generate members of ObjectMeta not tagged as `// Read-only`
+  - generate members of ObjectMeta not tagged as `// Read-only` (case insensitive)
 
 - Given a type with Builtin / Primitive members
-  - generate setter functions for each member not tagged as `// Read-only`.
+  - generate setter functions for each member not tagged as `// Read-only` (case insensitive).
