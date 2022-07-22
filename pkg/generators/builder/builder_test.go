@@ -139,6 +139,17 @@ func TestBuilderAliasPrimitiveType(t *testing.T) {
 	assert.Contains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
 }
 
+func TestBuilderAliasPrimitiveTypeNotGenerated(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	assert.NotContains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
+}
+
 func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
