@@ -80,6 +80,29 @@ package mytypes
 // +kanopy:builder=package
 ```
 
+## Generate Enums
+
+An enum can be generated with the following argument. Enum constants are used in several upstream k8s packages.
+e.g.  
+
+```golang
+// +kanopy:builder=true,enum=*;CREATE;UPDATE;DELETE;CONNECT
+type OperationType admissionv1.OperationType
+```
+
+Which generates:
+```golang
+const OperationTypeCreate OperationType = "CREATE"
+```
+
+The `*` is a special value within k8s that indicates `All`.  The code generator will translate a `*` to all in the suffix of the constant name.
+
+```golang
+const OperationTypeAll OperationType = "*"
+```
+
+Enum arguments can be used for both upstream packages and internal packages.
+
 ## Definition of Terms
 
 | terms | definition |

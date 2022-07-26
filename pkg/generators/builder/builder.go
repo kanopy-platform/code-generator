@@ -109,8 +109,8 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	sw := generator.NewSnippetWriter(w, c, "$", "$")
 
 	if t.IsPrimitive() {
-		log.Infof("skipping primitive type: %s", t.Name.Name)
-		return nil
+		sw.Do(snippets.GenerateEnumSetter(t, tags.GetEnumOptions(t)))
+		return sw.Error()
 	}
 
 	if hasObjectMetaEmbedded(t) {
