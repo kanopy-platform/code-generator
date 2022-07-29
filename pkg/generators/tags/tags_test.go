@@ -55,6 +55,64 @@ func TestExtractCommentTag(t *testing.T) {
 	}
 }
 
+func TestExtractEnumArgFromCommentTag(t *testing.T) {
+	fmtTag := "+%s=%s,enum=%s"
+	tests := []struct {
+		description string
+		tag         string
+		comments    []string
+		want        string
+	}{
+		{
+			description: "enum from comments",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value", "class")},
+			want:        "class",
+		},
+		{
+			description: "multi enum from comments",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value", "val1;val2")},
+			want:        "val1;val2",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.want, ExtractArg(test.comments, test.tag, EnumFlag), test.description)
+	}
+}
+
+func TestGetEnumOptions(t *testing.T) {
+	fmtTag := "+%s=%s,enum=%s"
+	tests := []struct {
+		description string
+		tag         string
+		comments    []string
+		want        []string
+	}{
+		{
+			description: "enum from comments",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value", "class")},
+			want:        []string{"class"},
+		},
+		{
+			description: "multi enum from comments",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value", "val1;val2")},
+			want:        []string{"val1", "val2"},
+		},
+	}
+
+	for _, test := range tests {
+		tt := types.Type{
+			Name:         types.Name{},
+			CommentLines: test.comments,
+		}
+		assert.Equal(t, test.want, GetEnumOptions(&tt), test.description)
+	}
+}
+
 func TestTypeEnabled(t *testing.T) {
 	assert.True(t, IsTypeEnabled(getTestPackage(t).Types["AType"]))
 }

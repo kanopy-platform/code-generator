@@ -11,6 +11,7 @@ const (
 	BuilderPackage = "package"
 	BuilderOptIn   = "true"
 	BuilderOptOut  = "false"
+	EnumFlag       = "enum"
 )
 
 func IsPackageTagged(comments []string) bool {
@@ -23,6 +24,11 @@ func IsTypeEnabled(t *types.Type) bool {
 
 func IsTypeOptedOut(t *types.Type) bool {
 	return Extract(combineTypeComments(t), Builder) == BuilderOptOut
+}
+
+func GetEnumOptions(t *types.Type) []string {
+	val := ExtractArg(combineTypeComments(t), Builder, EnumFlag)
+	return strings.Split(val, ";")
 }
 
 func IsMemberReadyOnly(m types.Member) bool {
@@ -41,6 +47,31 @@ func Extract(comments []string, tag string) string {
 	}
 
 	return getFirstTagValue(vals...)
+}
+
+func ExtractArg(comments []string, tag string, arg string) string {
+	vals := types.ExtractCommentTags("+", comments)[tag]
+	if len(vals) == 0 {
+		return ""
+	}
+
+	args := strings.Split(vals[0], ",")
+	for _, a := range args {
+		if strings.Contains(a, "=") {
+			kvs := strings.Split(a, "=")
+			if len(kvs) == 2 {
+				key := kvs[0]
+				if key == arg {
+					return kvs[1]
+				}
+			}
+		}
+
+		if a == arg {
+			return a
+		}
+	}
+	return ""
 }
 
 func combineTypeComments(t *types.Type) []string {

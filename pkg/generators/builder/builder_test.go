@@ -126,6 +126,30 @@ func TestBuilderPattern_NonObjectMetaGeneratesSnippets(t *testing.T) {
 	assert.NotContains(t, buf.String(), "DeepCopyInto")
 }
 
+func TestBuilderAliasPrimitiveType(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
+	_, aliasToGenerate := newTestGeneratorType(t, "d", "AliasType")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.True(t, g.Filter(c, aliasToGenerate))
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	assert.Contains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
+}
+
+func TestBuilderAliasPrimitiveTypeNotGenerated(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
+	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
+	g := b.NewBuilder(pkg)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	assert.NotContains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
+}
+
 func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
