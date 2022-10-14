@@ -14,7 +14,7 @@ func TestRootCommandGeneratorArgs(t *testing.T) {
 		want *gengoargs.GeneratorArgs
 	}{
 		{
-			args: []string{"--bounding-dirs=dir", "--input-dirs=test", "--output-base=./src", "--output-package=pkg", "--output-file-base=zz-gen", "--go-header-file=myfile", "--verify-only", "--build-tag=abc", "--trim-path-prefix=src"},
+			args: []string{"--bounding-dirs=dir", "--input-dirs=test", "--output-base=./src", "--output-package=pkg", "--output-file-base=zz-gen", "--go-header-file=myfile", "--verify-only", "--include-test-files", "--build-tag=abc", "--trim-path-prefix=src"},
 			want: func() *gengoargs.GeneratorArgs {
 				g := gengoargs.Default()
 
@@ -25,6 +25,7 @@ func TestRootCommandGeneratorArgs(t *testing.T) {
 				g.OutputFileBaseName = "zz-gen"
 				g.GoHeaderFilePath = "myfile"
 				g.VerifyOnly = true
+				g.IncludeTestFiles = true
 				g.GeneratedBuildTag = "abc"
 				g.TrimPathPrefix = "src"
 
