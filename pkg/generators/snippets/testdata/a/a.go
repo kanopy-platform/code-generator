@@ -19,6 +19,7 @@ type SomeStruct struct {
 	Bool               bool
 	PointerBool        *bool
 	Alias              *b.AliasOfString
+	AnEnum             b.AliasOfString
 }
 
 type AStruct struct {
