@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets/testdata/a"
+	"github.com/kanopy-platform/code-generator/pkg/generators/snippets/testdata/b"
 )
 
 type SomeStruct struct {
@@ -23,6 +24,7 @@ type ComplexStruct struct {
 }
 
 type Alias b.AliasOfString
+type AnEnum b.AliasOfString
 
 func (c *ComplexStruct) DeepCopyInto(in *ComplexStruct) {
 	// not impl test only

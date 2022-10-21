@@ -187,7 +187,11 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 		case m.Type == types.Bool:
 			sw.Do(setter.GenerateSetterForBool(m))
 		default:
-			sw.Do(setter.GenerateSetterForType(m))
+			if b.isTypePrimitiveEnabled(m) {
+				sw.Do(setter.GenerateSetterForTypeEnum(m, b.getEnabledPrimitiveType(m)))
+			} else {
+				sw.Do(setter.GenerateSetterForType(m))
+			}
 		}
 	}
 }
@@ -220,6 +224,11 @@ func (b *BuilderPatternGenerator) isTypePrimitiveEnabled(t types.Member) bool {
 	typeName := t.Name
 	_, exists := b.enabledTypes[typeName]
 	return exists
+}
+
+func (b *BuilderPatternGenerator) getEnabledPrimitiveType(t types.Member) *types.Type {
+	typeName := t.Name
+	return b.enabledTypes[typeName]
 }
 
 func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
