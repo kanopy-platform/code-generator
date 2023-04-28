@@ -174,7 +174,9 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 					sw.Do(setter.GenerateSetterForPointerToBuiltinType(m))
 				}
 			case types.Struct:
+				log.Debugf("generateSettersForType - Pointer -> Struct : %v", pointerType)
 				if b.isTypeEnabled(pointerType) {
+					log.Debugf("\t %v is enabled", pointerType)
 					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
 				}
 			case types.Alias:
