@@ -35,6 +35,21 @@ func TestGenerateEnumSetter(t *testing.T) {
 			enumVals:    []string{"VAL"},
 			want:        "const MyEnumVal MyEnum = \"VAL\"\n",
 		},
+		{
+			description: "title case",
+			enumVals:    []string{"AValueHere"},
+			want:        "const MyEnumAValueHere MyEnum = \"AValueHere\"\n",
+		},
+		{
+			description: "title case from lower",
+			enumVals:    []string{"value"},
+			want:        "const MyEnumValue MyEnum = \"value\"\n",
+		},
+		{
+			description: "kubernetes specific",
+			enumVals:    []string{"kubernetes.io/test-enum-value", "val2"},
+			want:        "const MyEnumTestEnumValue MyEnum = \"kubernetes.io/test-enum-value\"\nconst MyEnumVal2 MyEnum = \"val2\"\n",
+		},
 	}
 
 	tt := enumTestType()
