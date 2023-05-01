@@ -24,7 +24,7 @@ func WithGeneratorArgs(g *gengoargs.GeneratorArgs) func(*rootCommand) {
 
 func NewRootCommand(opts ...func(*rootCommand)) *cobra.Command {
 	rootCommand := &rootCommand{
-		GeneratorArgs: gengoargs.Default(),
+		GeneratorArgs: gengoargs.Default().WithoutDefaultFlagParsing(),
 	}
 
 	for _, opt := range opts {
@@ -62,7 +62,7 @@ func (r *rootCommand) setupFlags(cmd *cobra.Command) {
 
 func (r *rootCommand) prerun(cmd *cobra.Command, args []string) error {
 
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return err
 	}
 

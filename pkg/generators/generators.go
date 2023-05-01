@@ -1,6 +1,7 @@
 package generators
 
 import (
+	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/gengo/args"
@@ -10,7 +11,19 @@ import (
 )
 
 type BuilderFactory interface {
-	NewBuilder(pkg *types.Package) generator.Generator
+	NewBuilder(pkg *types.Package, packageIndex *PackageTypeIndex) generator.Generator
+}
+
+type PackageTypeIndex struct {
+	TypesByTypePath map[string]*types.Type
+	Gomod           string
+}
+
+func NewPackageTypeIndex() *PackageTypeIndex {
+	return &PackageTypeIndex{
+		TypesByTypePath: map[string]*types.Type{},
+		Gomod:           "github.com/10gen/kanopy/pkg/builder/",
+	}
 }
 
 const (
@@ -28,6 +41,7 @@ func NameSystems() namer.NameSystems {
 type Generators struct {
 	Boilerplate string
 	Builder     BuilderFactory
+	Index       *PackageTypeIndex
 }
 
 func WithBoilerplate(boilerplate string) func(g *Generators) {
@@ -37,7 +51,11 @@ func WithBoilerplate(boilerplate string) func(g *Generators) {
 }
 
 func New(builderFactory BuilderFactory, opts ...func(g *Generators)) *Generators {
-	g := &Generators{Builder: builderFactory}
+	g := &Generators{
+		Boilerplate: "",
+		Builder:     builderFactory,
+		Index:       NewPackageTypeIndex(),
+	}
 	for _, o := range opts {
 		o(g)
 	}
@@ -45,12 +63,21 @@ func New(builderFactory BuilderFactory, opts ...func(g *Generators)) *Generators
 }
 
 func (g *Generators) Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
-	packages := generator.Packages{}
+	packages := []*types.Package{}
 	for _, v := range context.Inputs {
 		pkg := context.Universe[v]
 		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
 			log.Infof("Package: %s marked for generation.", pkg.Name)
-			packages = append(packages, &generator.DefaultPackage{
+			packages = append(packages, pkg)
+			buildPackageIndex(g.Index, pkg)
+		}
+	}
+
+	gp := generator.Packages{}
+	for _, pkg := range packages {
+		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
+			log.Infof("Package: %s marked for generation.", pkg.Name)
+			gp = append(gp, &generator.DefaultPackage{
 				PackageName:   pkg.Name,
 				PackagePath:   pkg.Path,
 				HeaderText:    []byte(g.Boilerplate),
@@ -60,7 +87,7 @@ func (g *Generators) Packages(context *generator.Context, arguments *args.Genera
 		}
 	}
 
-	return packages
+	return gp
 }
 
 func filterFuncByPackagePath(pkg *types.Package) func(c *generator.Context, t *types.Type) bool {
@@ -72,16 +99,22 @@ func filterFuncByPackagePath(pkg *types.Package) func(c *generator.Context, t *t
 func (g *Generators) generatorFuncForPackage(pkg *types.Package) func(c *generator.Context) []generator.Generator {
 	return func(c *generator.Context) []generator.Generator {
 		return []generator.Generator{
-			g.Builder.NewBuilder(pkg),
+			g.Builder.NewBuilder(pkg, g.Index),
 		}
 	}
 }
 
+func buildPackageIndex(packageIndex *PackageTypeIndex, pkg *types.Package) {
+	packageIndex.TypesByTypePath = index.BuildPackageIndex(packageIndex.TypesByTypePath, pkg)
+}
+
 func doPackageTypesNeedGeneration(pkg *types.Package) bool {
+	cnt := 0
 	for _, t := range pkg.Types {
 		if tags.IsTypeEnabled(t) {
-			return true
+			cnt++
+			log.Debugf("Type marked for generation: Name: %s \t \n %#v", t.Name, t.Members)
 		}
 	}
-	return false
+	return cnt > 0
 }

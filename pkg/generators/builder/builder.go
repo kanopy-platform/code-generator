@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets"
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	"k8s.io/gengo/namer"
@@ -20,21 +21,23 @@ type BuilderPatternGenerator struct {
 	allTypes     bool
 	imports      namer.ImportTracker
 	enabledTypes map[string]*types.Type
+	packageIndex *generators.PackageTypeIndex
 }
 
 type BuilderPatternGeneratorFactory struct {
 	OutputFileBaseName string
 }
 
-func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package) generator.Generator {
+func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageIndex *generators.PackageTypeIndex) generator.Generator {
 	return &BuilderPatternGenerator{
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
 		pkgToBuild:   pkg,
 		allTypes:     isAllTypes(pkg),
-		imports:      newImportTracker(),
+		imports:      newImportTracker(packageIndex),
 		enabledTypes: map[string]*types.Type{},
+		packageIndex: packageIndex,
 	}
 }
 
@@ -42,11 +45,14 @@ func isAllTypes(pkg *types.Package) bool {
 	return tags.IsPackageTagged(pkg.Comments)
 }
 
-func newImportTracker() namer.ImportTracker {
+func newImportTracker(index *generators.PackageTypeIndex) namer.ImportTracker {
 	tracker := namer.NewDefaultImportTracker(types.Name{})
 	tracker.IsInvalidType = func(*types.Type) bool { return false }
 	tracker.LocalName = func(name types.Name) string { return golangNameToImportAlias(&tracker, name) }
-	tracker.PrintImport = func(path, name string) string { return name + " \"" + path + "\"" }
+	tracker.PrintImport = func(path, name string) string {
+		path = strings.Replace(path, "./", index.Gomod, 1)
+		return name + " \"" + path + "\""
+	}
 	return &tracker
 }
 
@@ -126,6 +132,7 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 	}
 
 	for _, member := range t.Members {
+		log.Debugf("generateSettersForType %v - Type : %v", member.Name, member.Type)
 		b.generateSettersForType(sw, t, member.Type)
 	}
 
@@ -140,6 +147,8 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 			continue
 		}
 
+		log.Debugf("parentMember %v - Type : %v -- Kind: %s", m.Name, m.Type, m.Type.Kind)
+
 		switch {
 		case m.Type.Kind == types.Map:
 			keyType := m.Type.Key
@@ -153,15 +162,28 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 		case m.Type.Kind == types.Slice:
 			sliceType := m.Type.Elem
 			switch sliceType.Kind {
-			case types.Struct:
-				if b.isTypeEnabled(sliceType) {
-					sw.Do(setter.GenerateSetterForEmbeddedSlice(m, b.getWrapperType(sliceType)))
+			case types.Struct, types.Pointer:
+				log.Debugf("generateSettersForType - Slice -> Struct : %v - Type : %v", m.Name, m.Type)
+				if b.isTypeEnabled(m.Type) {
+
+					if sliceType.Kind == types.Pointer {
+						log.Debugf("\t %v is enabled -> GenerateSetterForEmbeddedSlicePointer", m.Type)
+						sw.Do(setter.GenerateSetterForEmbeddedSlicePointer(m, b.getWrapperType(sliceType)))
+					} else {
+						log.Debugf("\t %v is enabled -> GenerateSetterForEmbeddedSlice", m.Type)
+						sw.Do(setter.GenerateSetterForEmbeddedSlice(m, b.getWrapperType(sliceType)))
+					}
 				}
 			default:
-				sw.Do(setter.GenerateSetterForMemberSlice(m))
+				if b.isTypeEnabled(m.Type) || sliceType.Kind == types.Builtin {
+					log.Debugf("\t %v is default   (kind - %s)", m.Type, sliceType.Kind)
+					sw.Do(setter.GenerateSetterForMemberSlice(m))
+				}
 			}
 		case m.Type.Kind == types.Struct:
+			log.Debugf("generateSettersForType - Struct : %v", m.Type)
 			if b.isTypeEnabled(m.Type) {
+				log.Debugf("\t %v is enabled", m.Type)
 				sw.Do(setter.GenerateSetterForEmbeddedStruct(m, b.getWrapperType(m.Type)))
 			}
 		case m.Type.Kind == types.Pointer:
@@ -180,6 +202,7 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 					sw.Do(setter.GenerateSetterForEmbeddedPointer(m, b.getWrapperType(pointerType)))
 				}
 			case types.Alias:
+				log.Debugf("generateSettersForType - Alias : %v", m.Type)
 				if b.isTypePrimitiveEnabled(m) {
 					sw.Do(setter.GenerateSetterForAliasPointerPrimitive(m, m.Type))
 				}
@@ -189,11 +212,13 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 		case m.Type == types.Bool:
 			sw.Do(setter.GenerateSetterForBool(m))
 		default:
+			log.Debugf("generateSettersForType - Default : %v - Type: %v", m.Name, m.Type.Name)
 			if b.isTypePrimitiveEnabled(m) {
 				sw.Do(setter.GenerateSetterForTypeEnum(m, b.getEnabledPrimitiveType(m)))
-			} else {
+			} else if b.isTypeEnabled(m.Type) {
 				sw.Do(setter.GenerateSetterForType(m))
 			}
+
 		}
 	}
 }
@@ -218,8 +243,14 @@ func (b *BuilderPatternGenerator) doesTypeNeedGeneration(t *types.Type) bool {
 
 func (b *BuilderPatternGenerator) isTypeEnabled(t *types.Type) bool {
 	typeName := t.Name.String()
-	_, exists := b.enabledTypes[typeName]
-	return exists
+	// _, exists := b.enabledTypes[typeName]
+	// return exists
+
+	log.Debugf("isTypeEnabled for %s", typeName)
+	typeName = strings.Replace(typeName, "[]", "", 1)
+	typeName = strings.Replace(typeName, "*", "", 1)
+	_, exists := b.packageIndex.TypesByTypePath[typeName]
+	return exists || t.Kind == types.Builtin
 }
 
 func (b *BuilderPatternGenerator) isTypePrimitiveEnabled(t types.Member) bool {
@@ -235,10 +266,16 @@ func (b *BuilderPatternGenerator) getEnabledPrimitiveType(t types.Member) *types
 
 func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 	typeName := t.Name.String()
+
+	typeName = strings.Replace(typeName, "[]", "", 1)
+	typeName = strings.Replace(typeName, "*", "", 1)
+	log.Debugf("getWrapperType for %s", typeName)
+
 	if parent, ok := b.enabledTypes[typeName]; ok {
 		return parent
 	}
-	return nil
+
+	return b.packageIndex.TypesByTypePath[typeName]
 }
 
 func hasObjectMetaEmbedded(t *types.Type) bool {
@@ -285,9 +322,9 @@ func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bo
 
 	b.enablePrimitiveType(t)
 
-	for _, m := range t.Members {
-		b.enableEmbededMemberType(m, t)
-	}
+	// for _, m := range t.Members {
+	// 	b.enableEmbededMemberType(m, t)
+	// }
 
 	return true
 }
@@ -326,8 +363,9 @@ func (b *BuilderPatternGenerator) isNotTargetPackage(pkg string) bool {
 	if pkg == b.pkgToBuild.Path {
 		return false
 	}
-	if strings.HasSuffix(pkg, "\""+b.pkgToBuild.Path+"\"") {
-		return false
-	}
-	return true
+
+	eval := strings.HasSuffix(pkg, b.pkgToBuild.Path[2:]+"\"")
+
+	log.Debugf("Suffix Test |%s| has suffix |%s| == %t", pkg, b.pkgToBuild.Path[2:]+"\"", eval)
+	return !eval
 }
