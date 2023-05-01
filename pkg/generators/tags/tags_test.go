@@ -113,6 +113,31 @@ func TestGetEnumOptions(t *testing.T) {
 	}
 }
 
+func TestExtractRef(t *testing.T) {
+	fmtTag := "+%s=%s,ref=%s"
+	tests := []struct {
+		description string
+		tag         string
+		comments    []string
+		want        string
+	}{
+		{
+			description: "extract alias type ref",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value", "ref.io/pkg/v1.Test")},
+			want:        "ref.io/pkg/v1.Test",
+		},
+	}
+
+	for _, test := range tests {
+		tt := types.Type{
+			Name:         types.Name{},
+			CommentLines: test.comments,
+		}
+		assert.Equal(t, test.want, ExtractRef(&tt), test.description)
+	}
+}
+
 func TestTypeEnabled(t *testing.T) {
 	assert.True(t, IsTypeEnabled(getTestPackage(t).Types["AType"]))
 }
