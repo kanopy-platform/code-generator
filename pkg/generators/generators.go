@@ -22,7 +22,7 @@ type PackageTypeIndex struct {
 func NewPackageTypeIndex() *PackageTypeIndex {
 	return &PackageTypeIndex{
 		TypesByTypePath: map[string]*types.Type{},
-		Gomod:           "github.com/10gen/kanopy/pkg/builder/",
+		Gomod:           "",
 	}
 }
 
