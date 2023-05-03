@@ -193,7 +193,7 @@ func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
 	imports := g.Imports(c)
-	assert.Len(t, imports, 2)
+	assert.Len(t, imports, 4)
 	assert.Contains(t, strings.Join(imports, ""), "cmeta")
 	assert.Contains(t, strings.Join(imports, ""), "cd")
 
