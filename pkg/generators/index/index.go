@@ -23,17 +23,11 @@ func BuildPackageIndex(index map[string]*types.Type, pkg *types.Package) map[str
 				}
 			}
 
-			if len(t.Members) == 0 {
-				log.Debugf("Type with No members: %s - Kind : %s", t.Name, t.Kind)
-				if t.Kind == types.Alias {
-					log.Debugf("Indexing %s - Kind : %s (%s)-- Underling Type: %s", t.Name, t.Kind, t.Name.String(), t.Underlying.Name.String())
-					log.Debugf("\t %#v", t.Underlying.String())
-
-					index[t.String()] = t
-				}
+			if t.Kind == types.Alias {
+				ref := tags.ExtractRef(t)
+				log.Debugf("Indexing %s - Kind : %s (%s) - Underling Type: %s, Ref: %s", t.Name, t.Kind, t.Name.String(), t.Underlying.Name.String(), ref)
+				index[ref] = t
 			}
-		} else {
-			log.Debugf("NOT INDEXING: %s", t.Name)
 		}
 	}
 	return index

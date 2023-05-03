@@ -17,10 +17,10 @@ import (
 
 type BuilderPatternGenerator struct {
 	generator.DefaultGen
-	pkgToBuild   *types.Package
-	allTypes     bool
-	imports      namer.ImportTracker
-	enabledTypes map[string]*types.Type
+	pkgToBuild *types.Package
+	allTypes   bool
+	imports    namer.ImportTracker
+	//enabledTypes map[string]*types.Type
 	packageIndex *generators.PackageTypeIndex
 }
 
@@ -33,10 +33,10 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageI
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
 		},
-		pkgToBuild:   pkg,
-		allTypes:     isAllTypes(pkg),
-		imports:      newImportTracker(packageIndex),
-		enabledTypes: map[string]*types.Type{},
+		pkgToBuild: pkg,
+		allTypes:   isAllTypes(pkg),
+		imports:    newImportTracker(packageIndex),
+		//enabledTypes: map[string]*types.Type{},
 		packageIndex: packageIndex,
 	}
 }
@@ -203,22 +203,28 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 				}
 			case types.Alias:
 				log.Debugf("generateSettersForType - Alias : %v", m.Type)
-				if b.isTypePrimitiveEnabled(m) {
-					sw.Do(setter.GenerateSetterForAliasPointerPrimitive(m, m.Type))
+				if b.isTypeEnabled(m.Type) {
+					wrap := b.getWrapperType(m.Type)
+					log.Debugf("WRAPAP %#v", wrap)
+					sw.Do(setter.GenerateSetterForAliasPointerPrimitive(m, wrap))
 				}
 			default:
 				sw.Do(setter.GenerateSetterForType(m))
 			}
 		case m.Type == types.Bool:
 			sw.Do(setter.GenerateSetterForBool(m))
+		case m.Type.Kind == types.Alias:
+			if m.Type.Underlying.Kind == types.Builtin && b.isTypeEnabled(m.Type) {
+				log.Debugf("Kind Alias - generateSetterForTypeEnum - enhanced : %v - Type: %v", m.Name, m.Type.Name)
+				wrap := b.getWrapperType(m.Type)
+				sw.Do(setter.GenerateSetterForTypeEnum(m, wrap))
+			}
 		default:
 			log.Debugf("generateSettersForType - Default : %v - Type: %v", m.Name, m.Type.Name)
-			if b.isTypePrimitiveEnabled(m) {
-				sw.Do(setter.GenerateSetterForTypeEnum(m, b.getEnabledPrimitiveType(m)))
-			} else if b.isTypeEnabled(m.Type) {
+			if b.isTypeEnabled(m.Type) {
+				log.Debugf("\t GenerateSetterForType : %v - Type: %v", m.Name, m.Type.Name)
 				sw.Do(setter.GenerateSetterForType(m))
 			}
-
 		}
 	}
 }
@@ -253,16 +259,16 @@ func (b *BuilderPatternGenerator) isTypeEnabled(t *types.Type) bool {
 	return exists || t.Kind == types.Builtin
 }
 
-func (b *BuilderPatternGenerator) isTypePrimitiveEnabled(t types.Member) bool {
-	typeName := t.Name
-	_, exists := b.enabledTypes[typeName]
-	return exists
-}
+// func (b *BuilderPatternGenerator) isTypePrimitiveEnabled(t types.Member) bool {
+// 	typeName := t.Name
+// 	_, exists := b.enabledTypes[typeName]
+// 	return exists
+// }
 
-func (b *BuilderPatternGenerator) getEnabledPrimitiveType(t types.Member) *types.Type {
-	typeName := t.Name
-	return b.enabledTypes[typeName]
-}
+// func (b *BuilderPatternGenerator) getEnabledPrimitiveType(t types.Member) *types.Type {
+// 	typeName := t.Name
+// 	return b.enabledTypes[typeName]
+// }
 
 func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 	typeName := t.Name.String()
@@ -271,9 +277,9 @@ func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 	typeName = strings.Replace(typeName, "*", "", 1)
 	log.Debugf("getWrapperType for %s", typeName)
 
-	if parent, ok := b.enabledTypes[typeName]; ok {
-		return parent
-	}
+	// if parent, ok := b.enabledTypes[typeName]; ok {
+	// 	return parent
+	// }
 
 	return b.packageIndex.TypesByTypePath[typeName]
 }
@@ -316,31 +322,31 @@ func getMemberTypeFromType(t *types.Type, name string) *types.Type {
 
 func (b *BuilderPatternGenerator) Filter(c *generator.Context, t *types.Type) bool {
 	log.Debugf("Checking type: %s", t.Name.Name)
-	if !b.needsGeneration(t) {
-		return false
-	}
+	// if !b.needsGeneration(t) {
+	// 	return false
+	// }
 
-	b.enablePrimitiveType(t)
+	//b.enablePrimitiveType(t)
 
 	// for _, m := range t.Members {
 	// 	b.enableEmbededMemberType(m, t)
 	// }
 
-	return true
+	return b.needsGeneration(t)
 }
 
-func (b *BuilderPatternGenerator) enableEmbededMemberType(m types.Member, t *types.Type) {
-	if m.Embedded {
-		childType := m.Type.Name.String()
-		b.enabledTypes[childType] = t
-	}
-}
+// func (b *BuilderPatternGenerator) enableEmbededMemberType(m types.Member, t *types.Type) {
+// 	if m.Embedded {
+// 		childType := m.Type.Name.String()
+// 		b.enabledTypes[childType] = t
+// 	}
+// }
 
-func (b *BuilderPatternGenerator) enablePrimitiveType(t *types.Type) {
-	if t.IsPrimitive() {
-		b.enabledTypes[t.Name.Name] = t
-	}
-}
+// func (b *BuilderPatternGenerator) enablePrimitiveType(t *types.Type) {
+// 	if t.IsPrimitive() {
+// 		b.enabledTypes[t.Name.Name] = t
+// 	}
+// }
 
 func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems {
 	return namer.NameSystems{
