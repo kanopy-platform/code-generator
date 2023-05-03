@@ -28,6 +28,7 @@ type BuilderPatternGeneratorFactory struct {
 }
 
 func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageIndex *generators.PackageTypeIndex) generator.Generator {
+
 	return &BuilderPatternGenerator{
 		DefaultGen: generator.DefaultGen{
 			OptionalName: d.OutputFileBaseName,
@@ -51,6 +52,11 @@ func newImportTracker(index *generators.PackageTypeIndex) namer.ImportTracker {
 		path = strings.Replace(path, "./", index.Gomod, 1)
 		return name + " \"" + path + "\""
 	}
+
+	for _, v := range index.TypesByTypePath {
+		tracker.AddType(v)
+	}
+
 	return &tracker
 }
 
@@ -173,8 +179,14 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 				}
 			default:
 				if b.isTypeEnabled(m.Type) || sliceType.Kind == types.Builtin {
-					log.Debugf("\t %v is default   (kind - %s)", m.Type, sliceType.Kind)
-					sw.Do(setter.GenerateSetterForMemberSlice(m))
+					log.Debugf("\t NAME(%s) - %v is default   (kind - %s)", m.Name, m.Type, sliceType.Kind)
+
+					if sliceType.Kind == types.Alias {
+						wrap := b.getWrapperType(m.Type)
+						sw.Do(setter.GenerateSetterForEmbeddedSliceEnum(m, wrap))
+					} else {
+						sw.Do(setter.GenerateSetterForMemberSlice(m))
+					}
 				}
 			}
 		case m.Type.Kind == types.Struct:
@@ -202,7 +214,6 @@ func (b *BuilderPatternGenerator) generateSettersForType(sw *generator.SnippetWr
 				log.Debugf("generateSettersForType - Alias : %v", m.Type)
 				if b.isTypeEnabled(m.Type) {
 					wrap := b.getWrapperType(m.Type)
-					log.Debugf("WRAPAP %#v", wrap)
 					sw.Do(setter.GenerateSetterForAliasPointerPrimitive(m, wrap))
 				}
 			default:
@@ -313,23 +324,5 @@ func (b *BuilderPatternGenerator) Namers(c *generator.Context) namer.NameSystems
 }
 
 func (b *BuilderPatternGenerator) Imports(c *generator.Context) (imports []string) {
-	importLines := []string{}
-	for _, singleImport := range b.imports.ImportLines() {
-		if b.isNotTargetPackage(singleImport) {
-			importLines = append(importLines, singleImport)
-		}
-	}
-
-	return importLines
-}
-
-func (b *BuilderPatternGenerator) isNotTargetPackage(pkg string) bool {
-	if pkg == b.pkgToBuild.Path {
-		return false
-	}
-
-	eval := strings.HasSuffix(pkg, b.pkgToBuild.Path[2:]+"\"")
-
-	log.Debugf("Suffix Test |%s| has suffix |%s| == %t", pkg, b.pkgToBuild.Path[2:]+"\"", eval)
-	return !eval
+	return b.imports.ImportLines()
 }
