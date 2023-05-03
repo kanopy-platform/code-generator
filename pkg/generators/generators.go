@@ -16,13 +16,12 @@ type BuilderFactory interface {
 
 type PackageTypeIndex struct {
 	TypesByTypePath map[string]*types.Type
-	Gomod           string
+	PackageRoot     string
 }
 
 func NewPackageTypeIndex() *PackageTypeIndex {
 	return &PackageTypeIndex{
 		TypesByTypePath: map[string]*types.Type{},
-		Gomod:           "",
 	}
 }
 
@@ -47,6 +46,12 @@ type Generators struct {
 func WithBoilerplate(boilerplate string) func(g *Generators) {
 	return func(g *Generators) {
 		g.Boilerplate = boilerplate
+	}
+}
+
+func WithPackageRoot(pr string) func(g *Generators) {
+	return func(g *Generators) {
+		g.Index.PackageRoot = pr
 	}
 }
 

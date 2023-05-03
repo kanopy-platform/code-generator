@@ -49,7 +49,7 @@ func newImportTracker(index *generators.PackageTypeIndex) namer.ImportTracker {
 	tracker.IsInvalidType = func(*types.Type) bool { return false }
 	tracker.LocalName = func(name types.Name) string { return golangNameToImportAlias(&tracker, name) }
 	tracker.PrintImport = func(path, name string) string {
-		path = strings.Replace(path, "./", index.Gomod, 1)
+		path = strings.Replace(path, "./", index.PackageRoot, 1)
 		return name + " \"" + path + "\""
 	}
 
