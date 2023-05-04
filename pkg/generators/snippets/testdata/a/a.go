@@ -21,6 +21,7 @@ type SomeStruct struct {
 	Alias              *b.AliasOfString
 	AnEnum             b.AliasOfString
 	ManyEnums          []b.AliasOfString
+	ManyPointers       []*CStruct
 }
 
 type AStruct struct {
