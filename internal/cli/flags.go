@@ -27,5 +27,4 @@ func flagGeneratorArgs(fs *pflag.FlagSet, g *gengoargs.GeneratorArgs) {
 
 func flagCustomGeneratorArgs(fs *pflag.FlagSet, customArgs *generators.CustomArgs) {
 	fs.StringSliceVar(&customArgs.BoundingDirs, "bounding-dirs", customArgs.BoundingDirs, "specify directories to bound the generation")
-	//fs.StringVar(&customArgs.GoModule, "go-mod", "", "specify ")
 }
