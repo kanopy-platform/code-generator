@@ -13,9 +13,6 @@ func BuildPackageIndex(index map[string]*types.Type, pkg *types.Package) map[str
 
 			for _, m := range t.Members {
 				if m.Embedded {
-					if m.Name == "StructField" {
-						continue
-					}
 					if _, ok := index[m.Type.String()]; !ok {
 						index[m.Type.String()] = t
 						log.Debugf("Indexing %s -> (%s, %s) -- Package -> %s(%s)", m.Type.String(), m.Name, m.Type.Name, pkg.Path, pkg.SourcePath)

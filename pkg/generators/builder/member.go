@@ -11,9 +11,7 @@ const (
 )
 
 func includeMember(parent *types.Type, member types.Member) bool {
-
 	log.Debugf("includeMember Check %v", member.Name)
-
 	if tags.IsMemberReadyOnly(member) {
 		log.Debugf("\t member %v is readonly", member.Name)
 		return false

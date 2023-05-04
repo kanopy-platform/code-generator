@@ -81,7 +81,6 @@ func (g *Generators) Packages(context *generator.Context, arguments *args.Genera
 	gp := generator.Packages{}
 	for _, pkg := range packages {
 		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
-			log.Infof("Package: %s marked for generation.", pkg.Name)
 			gp = append(gp, &generator.DefaultPackage{
 				PackageName:   pkg.Name,
 				PackagePath:   pkg.Path,
@@ -114,12 +113,10 @@ func buildPackageIndex(packageIndex *PackageTypeIndex, pkg *types.Package) {
 }
 
 func doPackageTypesNeedGeneration(pkg *types.Package) bool {
-	cnt := 0
 	for _, t := range pkg.Types {
 		if tags.IsTypeEnabled(t) {
-			cnt++
-			log.Debugf("Type marked for generation: Name: %s \t \n %#v", t.Name, t.Members)
+			return true
 		}
 	}
-	return cnt > 0
+	return false
 }
