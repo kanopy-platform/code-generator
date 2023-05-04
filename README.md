@@ -4,6 +4,9 @@ An opinionated Kubernetes Runtime and Golang type generator in the builder patte
 
 The Kanopy code-generator is built using the Kubernetes [gengo](https://github.com/kubernetes/gengo) packages.
 
+## Requirements
+The code generator depends on golang projects using `go.mod`.
+
 ## kanopy-codegen
 ### Usage
 ```
@@ -86,9 +89,11 @@ An enum can be generated with the following argument. Enum constants are used in
 e.g.  
 
 ```golang
-// +kanopy:builder=true,enum=*;CREATE;UPDATE;DELETE;CONNECT
+// +kanopy:builder=true,ref=k8s.io/api/admissionregistration/v1.OperationType,enum=*;CREATE;UPDATE;DELETE;CONNECT
 type OperationType admissionv1.OperationType
 ```
+
+* `ref` is required to provide a type hint to the generator since gengo resolves Alias types to the leaf node
 
 Which generates:
 ```golang
