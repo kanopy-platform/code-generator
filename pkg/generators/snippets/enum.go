@@ -36,7 +36,7 @@ func toSuffix(v string) string {
 		suffix = allSuffix
 	}
 
-	suffix = strings.ReplaceAll(suffix, "kubernetes.io/", "")
+	suffix = namespaceSuffix(suffix, "/")
 
 	if strings.Contains(suffix, "-") {
 		var sb strings.Builder
@@ -65,4 +65,17 @@ func toSuffix(v string) string {
 		return caser.String(suffix)
 	}
 	return suffix
+}
+
+func namespaceSuffix(in string, delim string) string {
+	out := in
+	if i := strings.LastIndex(in, delim); i > -1 {
+		switch {
+		case i < len(in)-1:
+			out = in[i+1:]
+		default:
+			out = ""
+		}
+	}
+	return out
 }
