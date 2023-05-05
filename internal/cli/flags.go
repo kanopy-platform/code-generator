@@ -7,7 +7,7 @@ import (
 )
 
 func flagLogLevel(flags *pflag.FlagSet) {
-	flags.String("log-level", "info", "Configure log level")
+	flags.StringP("log-level", "v", "info", "Configure log level")
 }
 
 // This replaces the https://github.com/kubernetes/gengo/blob/master/args/args.go#L102 AddFlags method.  The Cobra framework

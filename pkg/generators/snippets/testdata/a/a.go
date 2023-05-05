@@ -20,6 +20,8 @@ type SomeStruct struct {
 	PointerBool        *bool
 	Alias              *b.AliasOfString
 	AnEnum             b.AliasOfString
+	ManyEnums          []b.AliasOfString
+	ManyPointers       []*CStruct
 }
 
 type AStruct struct {

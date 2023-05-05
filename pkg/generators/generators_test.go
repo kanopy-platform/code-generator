@@ -119,6 +119,6 @@ type MockBuilderFactory struct {
 	generator.DefaultGen
 }
 
-func (m *MockBuilderFactory) NewBuilder(pkg *types.Package) generator.Generator {
+func (m *MockBuilderFactory) NewBuilder(pkg *types.Package, index *PackageTypeIndex) generator.Generator {
 	return m
 }

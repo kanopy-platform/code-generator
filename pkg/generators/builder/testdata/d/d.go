@@ -9,5 +9,5 @@ type DPolicyRule struct {
 	e.MockPolicyRule
 }
 
-// +kanopy:builder=true
+// +kanopy:builder=true,ref=github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/d/e.AliasToString
 type AliasType e.AliasToString

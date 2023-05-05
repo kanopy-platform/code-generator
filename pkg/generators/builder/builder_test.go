@@ -7,11 +7,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kanopy-platform/code-generator/pkg/generators"
+	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
 )
+
+var defaultIndex = generators.NewPackageTypeIndex()
 
 func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Package, *types.Type) {
 	testDir := fmt.Sprintf("./testdata/%s", dir)
@@ -23,9 +27,11 @@ func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Pac
 	assert.NoError(t, err)
 	findTypes, err := b.FindTypes()
 	assert.NoError(t, err)
-
 	pkg := findTypes[testDir]
 	assert.NotNil(t, pkg)
+
+	defaultIndex.TypesByTypePath = index.BuildPackageIndex(defaultIndex.TypesByTypePath, pkg)
+
 	n := pkg.Types[selector]
 	assert.NotNil(t, n)
 	return pkg, n
@@ -71,14 +77,14 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 	for _, test := range tests {
 		b := &BuilderPatternGeneratorFactory{}
 		pkg, typeToGenerate := newTestGeneratorType(t, test.dir, test.structName)
-		g := b.NewBuilder(pkg)
+		g := b.NewBuilder(pkg, defaultIndex)
 		c := newGeneratorContext(g)
 		assert.Equal(t, test.wantGen, g.Filter(c, typeToGenerate), test.description)
 	}
 }
 
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
-	tracker := newImportTracker()
+	tracker := newImportTracker(generators.NewPackageTypeIndex())
 	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	assert.Equal(t, "testdatac", golangNameToImportAlias(tracker, typeToGenerate.Name))
 
@@ -90,7 +96,7 @@ func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	_, specTypeToGenerate := newTestGeneratorType(t, "c", "MockSpec")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.True(t, g.Filter(c, typeToGenerate))
@@ -110,7 +116,7 @@ func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
 func TestBuilderPattern_NonObjectMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.True(t, g.Filter(c, typeToGenerate))
@@ -130,31 +136,32 @@ func TestBuilderAliasPrimitiveType(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
 	_, aliasToGenerate := newTestGeneratorType(t, "d", "AliasType")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.True(t, g.Filter(c, typeToGenerate))
 	assert.True(t, g.Filter(c, aliasToGenerate))
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+	t.Log(buf.String())
 	assert.Contains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
 }
 
 func TestBuilderAliasPrimitiveTypeNotGenerated(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "d", "DPolicyRule")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.True(t, g.Filter(c, typeToGenerate))
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
-	assert.NotContains(t, buf.String(), "func (o *DPolicyRule) WithAliasType(in AliasType) *DPolicyRule")
+	assert.NotContains(t, buf.String(), "func (o *DPolicyRule) WithToggleAliasWithoutRef(in AnotherAlias) *DPolicyRule")
 }
 
 func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	_, specTypeToGenerate := newTestGeneratorType(t, "c", "MockSpec")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.True(t, g.Filter(c, typeToGenerate))
@@ -181,12 +188,12 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
 	imports := g.Imports(c)
-	assert.Len(t, imports, 2)
+	assert.Len(t, imports, 4) // 4 types are tagged for importing
 	assert.Contains(t, strings.Join(imports, ""), "cmeta")
 	assert.Contains(t, strings.Join(imports, ""), "cd")
 
@@ -195,7 +202,7 @@ func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 func TestBuilderPattern_GenerateInit(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, _ := newTestGeneratorType(t, "c", "CDeployment")
-	g := b.NewBuilder(pkg)
+	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.Init(c, buf))

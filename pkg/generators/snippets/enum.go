@@ -2,6 +2,8 @@ package snippets
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -33,6 +35,47 @@ func toSuffix(v string) string {
 	if suffix == allValue {
 		suffix = allSuffix
 	}
-	caser := cases.Title(language.English)
-	return caser.String(suffix)
+
+	suffix = namespaceSuffix(suffix, "/")
+
+	if strings.Contains(suffix, "-") {
+		var sb strings.Builder
+		up := false
+		for i, r := range suffix {
+			if i == 0 {
+				sb.WriteRune(unicode.ToUpper(r))
+				continue
+			}
+			if r == '-' {
+				up = true
+				continue
+			}
+			if up {
+				up = false
+				sb.WriteRune(unicode.ToUpper(r))
+			} else {
+				sb.WriteRune(r)
+			}
+		}
+		suffix = sb.String()
+	}
+
+	if strings.ToLower(suffix) == suffix || strings.ToUpper(suffix) == suffix {
+		caser := cases.Title(language.English)
+		return caser.String(suffix)
+	}
+	return suffix
+}
+
+func namespaceSuffix(in string, delim string) string {
+	out := in
+	if i := strings.LastIndex(in, delim); i > -1 {
+		switch {
+		case i < len(in)-1:
+			out = in[i+1:]
+		default:
+			out = ""
+		}
+	}
+	return out
 }

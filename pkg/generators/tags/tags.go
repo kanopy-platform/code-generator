@@ -12,6 +12,7 @@ const (
 	BuilderOptIn   = "true"
 	BuilderOptOut  = "false"
 	EnumFlag       = "enum"
+	RefFlag        = "ref"
 )
 
 func IsPackageTagged(comments []string) bool {
@@ -29,6 +30,10 @@ func IsTypeOptedOut(t *types.Type) bool {
 func GetEnumOptions(t *types.Type) []string {
 	val := ExtractArg(combineTypeComments(t), Builder, EnumFlag)
 	return strings.Split(val, ";")
+}
+
+func ExtractRef(t *types.Type) string {
+	return ExtractArg(combineTypeComments(t), Builder, RefFlag)
 }
 
 func IsMemberReadyOnly(m types.Member) bool {
