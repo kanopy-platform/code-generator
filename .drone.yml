@@ -34,7 +34,7 @@ steps:
       - make test
     resources:
       limits:
-        memory: 512MiB
+        memory: 2GiB
 
   - name: license-check
     image: public.ecr.aws/kanopy/licensed-go:3.4.4
@@ -73,6 +73,9 @@ steps:
     image: golang:1.17
     commands:
       - make dist
+    resources:
+      limits:
+        memory: 2GiB
     when:
       event: tag
 
