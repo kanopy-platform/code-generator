@@ -25,7 +25,7 @@ steps:
         from_secret: CACHE_S3_SECRET_KEY
 
   - name: test
-    image: golangci/golangci-lint:v1.42.1
+    image: golangci/golangci-lint:v1.55.2
     environment:
       GOCACHE: /drone/src/gocache/
       GOLANGCI_LINT_CACHE: /drone/src/golangcilintcache/
@@ -43,7 +43,7 @@ steps:
       - licensed status
 
   - name: snyk
-    image: snyk/snyk:golang-1.17
+    image: snyk/snyk:golang-1.21
     environment:
       SNYK_TOKEN:
         from_secret: snyk_token
@@ -70,7 +70,7 @@ steps:
 
   # tag a new release
   - name: dist
-    image: golang:1.17
+    image: golang:1.21
     commands:
       - make dist
     resources:
