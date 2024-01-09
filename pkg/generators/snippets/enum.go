@@ -23,8 +23,10 @@ func GenerateEnumSetter(inputType *types.Type, enumOptions []string) (string, ge
 	raw := ""
 
 	for _, val := range enumOptions {
-		raw += fmt.Sprintf(`const $.name$%s $.name$ = "%s"`, toSuffix(val), val)
-		raw += "\n"
+		if val != "" {
+			raw += fmt.Sprintf(`const $.name$%s $.name$ = "%s"`, toSuffix(val), val)
+			raw += "\n"
+		}
 	}
 
 	return raw, args
