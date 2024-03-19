@@ -3,6 +3,7 @@ package builder
 import (
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/gengo/namer"
 	"k8s.io/gengo/types"
 )
 
@@ -14,6 +15,11 @@ func includeMember(parent *types.Type, member types.Member) bool {
 	log.Debugf("includeMember Check %v", member.Name)
 	if tags.IsMemberReadyOnly(member) {
 		log.Debugf("\t member %v is readonly", member.Name)
+		return false
+	}
+
+	if namer.IsPrivateGoName(member.Name) {
+		log.Debugf("\t member %v is private", member.Name)
 		return false
 	}
 
