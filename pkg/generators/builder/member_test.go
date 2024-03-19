@@ -37,6 +37,13 @@ func TestIncludeMember(t *testing.T) {
 			member:       "ReadOnlyLowerCase",
 			want:         false,
 		},
+		{
+			description:  "should not include private member",
+			dir:          "d/e",
+			typeSelector: "MockPolicyRule",
+			member:       "privateField",
+			want:         false,
+		},
 	}
 
 	for _, test := range tests {
