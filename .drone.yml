@@ -13,17 +13,6 @@ resources:
     memory: 2GiB
     
 steps:
-  - name: restore
-    image: plugins/s3-cache
-    settings:
-      restore: true
-      endpoint:
-        from_secret: CACHE_S3_ENDPOINT
-      access_key:
-        from_secret: CACHE_S3_ACCESS_KEY
-      secret_key:
-        from_secret: CACHE_S3_SECRET_KEY
-
   - name: test
     image: golangci/golangci-lint:v1.55.2
     environment:
@@ -49,22 +38,6 @@ steps:
         from_secret: snyk_token
     commands:
       - snyk monitor
-    when:
-      event: push
-
-  - name: rebuild
-    image: plugins/s3-cache
-    settings:
-      rebuild: true
-      endpoint:
-        from_secret: CACHE_S3_ENDPOINT
-      access_key:
-        from_secret: CACHE_S3_ACCESS_KEY
-      secret_key:
-        from_secret: CACHE_S3_SECRET_KEY
-      mount:
-        - gocache/
-        - golangcilintcache/
     when:
       event: push
 
