@@ -100,9 +100,9 @@ func sanitizeGoImportDir(dirs []string) string {
 }
 
 func pathToLegalGoName(in string) string {
-	out := strings.Replace(in, "_", "", -1)
-	out = strings.Replace(out, ".", "", -1)
-	return strings.Replace(out, "-", "", -1)
+	out := strings.ReplaceAll(in, "_", "")
+	out = strings.ReplaceAll(out, ".", "")
+	return strings.ReplaceAll(out, "-", "")
 }
 
 func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error {

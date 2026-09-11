@@ -141,7 +141,7 @@ func findFile(path, file string) (string, error) {
 	if _, err = os.Stat(fp); err == nil {
 		return current, nil
 	} else if path == "/" {
-		return "", fmt.Errorf("Could not find file %s in path", file)
+		return "", fmt.Errorf("could not find file %s in path", file)
 	}
 	return findFile(filepath.Dir(current), file)
 }

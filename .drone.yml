@@ -11,10 +11,10 @@ resources:
   requests:
     cpu: 1000
     memory: 2GiB
-    
+
 steps:
   - name: test
-    image: golangci/golangci-lint:v1.55.2
+    image: golangci/golangci-lint:v2.13
     environment:
       GOCACHE: /drone/src/gocache/
       GOLANGCI_LINT_CACHE: /drone/src/golangcilintcache/
@@ -32,7 +32,7 @@ steps:
       - licensed status
 
   - name: snyk
-    image: snyk/snyk:golang-1.21
+    image: snyk/snyk:golang-1.27
     environment:
       SNYK_TOKEN:
         from_secret: snyk_token
@@ -43,7 +43,7 @@ steps:
 
   # tag a new release
   - name: dist
-    image: golang:1.21
+    image: golang:1.27
     commands:
       - make dist
     resources:
