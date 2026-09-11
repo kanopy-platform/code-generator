@@ -1,22 +1,21 @@
 package builder
 
 import (
-	"go/token"
 	"io"
 	"strings"
 
 	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/kanopy-platform/code-generator/pkg/generators/snippets"
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
-	"k8s.io/gengo/namer"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/namer"
+	"k8s.io/gengo/v2/types"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/gengo/generator"
+	"k8s.io/gengo/v2/generator"
 )
 
 type BuilderPatternGenerator struct {
-	generator.DefaultGen
+	generator.GoGenerator
 	pkgToBuild   *types.Package
 	allTypes     bool
 	imports      namer.ImportTracker
@@ -30,79 +29,19 @@ type BuilderPatternGeneratorFactory struct {
 func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageIndex *generators.PackageTypeIndex) generator.Generator {
 
 	return &BuilderPatternGenerator{
-		DefaultGen: generator.DefaultGen{
-			OptionalName: d.OutputFileBaseName,
+		GoGenerator: generator.GoGenerator{
+			// gengo/v2 uses this verbatim as the output filename; v1 appended ".go".
+			OutputFilename: d.OutputFileBaseName + ".go",
 		},
 		pkgToBuild:   pkg,
 		allTypes:     isAllTypes(pkg),
-		imports:      newImportTracker(packageIndex),
+		imports:      generator.NewImportTrackerForPackage(pkg.Path),
 		packageIndex: packageIndex,
 	}
 }
 
 func isAllTypes(pkg *types.Package) bool {
 	return tags.IsPackageTagged(pkg.Comments)
-}
-
-func newImportTracker(index *generators.PackageTypeIndex) namer.ImportTracker {
-	tracker := namer.NewDefaultImportTracker(types.Name{})
-	tracker.IsInvalidType = func(*types.Type) bool { return false }
-	tracker.LocalName = func(name types.Name) string { return golangNameToImportAlias(&tracker, name) }
-	tracker.PrintImport = func(path, name string) string {
-		path = strings.Replace(path, "./", index.PackageRoot, 1)
-		return name + " \"" + path + "\""
-	}
-
-	for _, v := range index.TypesByTypePath {
-		tracker.AddType(v)
-	}
-
-	return &tracker
-}
-
-func golangNameToImportAlias(tracker namer.ImportTracker, t types.Name) string {
-	path := t.Package
-	dirs := strings.Split(path, namer.GoSeperator)
-	const immediateParentPosition = 2
-
-	for n := len(dirs) - immediateParentPosition; n >= 0; n-- {
-		name := sanitizeGoImportDir(sliceFromParent(dirs, n))
-
-		if isGolangNameImportTracked(tracker, name) {
-			continue
-		}
-
-		return prefixGoKeywordsWithUnderscore(name)
-	}
-	return ""
-}
-
-func sliceFromParent(in []string, parent int) []string {
-	return in[parent:]
-}
-
-func isGolangNameImportTracked(tracker namer.ImportTracker, name string) bool {
-	_, found := tracker.PathOf(name)
-	return found
-}
-
-func prefixGoKeywordsWithUnderscore(name string) string {
-	out := name
-	if token.Lookup(name).IsKeyword() {
-		out = "_" + name
-	}
-	return out
-}
-
-func sanitizeGoImportDir(dirs []string) string {
-	name := strings.Join(dirs, "")
-	return pathToLegalGoName(name)
-}
-
-func pathToLegalGoName(in string) string {
-	out := strings.ReplaceAll(in, "_", "")
-	out = strings.ReplaceAll(out, ".", "")
-	return strings.ReplaceAll(out, "-", "")
 }
 
 func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error {
@@ -123,11 +62,8 @@ func (b *BuilderPatternGenerator) GenerateType(c *generator.Context, t *types.Ty
 		return sw.Error()
 	}
 
-	if hasObjectMetaEmbedded(t) {
-		parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta)
+	if parentTypeOfObjectMeta := getParentOfEmbeddedType(t, ObjectMeta); parentTypeOfObjectMeta != nil {
 		objectMetaType := getMemberTypeFromType(parentTypeOfObjectMeta, ObjectMeta)
-		b.imports.AddType(parentTypeOfObjectMeta)
-		b.imports.AddType(objectMetaType)
 		sw.Do(snippets.GenerateConstructorForObjectMeta(t))
 		sw.Do(snippets.GenerateDeepCopy(t))
 		b.generateSettersForType(sw, t, objectMetaType)
@@ -276,13 +212,6 @@ func (b *BuilderPatternGenerator) getWrapperType(t *types.Type) *types.Type {
 	return b.packageIndex.TypesByTypePath[typeName]
 }
 
-func hasObjectMetaEmbedded(t *types.Type) bool {
-	if p := getParentOfEmbeddedType(t, ObjectMeta); p != nil {
-		return true
-	}
-	return false
-}
-
 func getParentOfEmbeddedType(t *types.Type, name string) *types.Type {
 	for _, m := range t.Members {
 		if m.Embedded {
@@ -292,15 +221,6 @@ func getParentOfEmbeddedType(t *types.Type, name string) *types.Type {
 		}
 	}
 	return nil
-}
-
-func getMemberFromType(t *types.Type, name string) types.Member {
-	for _, mm := range t.Members {
-		if mm.Name == name {
-			return mm
-		}
-	}
-	return types.Member{}
 }
 
 func getMemberTypeFromType(t *types.Type, name string) *types.Type {

@@ -3,30 +3,28 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/parser"
+	"k8s.io/gengo/v2/types"
 )
 
 var defaultIndex = generators.NewPackageTypeIndex()
 
 func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Package, *types.Type) {
 	testDir := fmt.Sprintf("./testdata/%s", dir)
-	d := args.Default()
-	d.IncludeTestFiles = true
-	d.InputDirs = []string{testDir + ""}
-	d.GoHeaderFilePath = filepath.Join(args.DefaultSourceTree())
-	b, err := d.NewBuilder()
+	p := parser.NewWithOptions(parser.Options{})
+	paths, err := p.FindPackages(testDir)
 	assert.NoError(t, err)
-	findTypes, err := b.FindTypes()
+	assert.NoError(t, p.LoadPackages(testDir))
+	findTypes, err := p.NewUniverse()
 	assert.NoError(t, err)
+	testDir = paths[0]
 	pkg := findTypes[testDir]
 	assert.NotNil(t, pkg)
 
@@ -81,15 +79,6 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 		c := newGeneratorContext(g)
 		assert.Equal(t, test.wantGen, g.Filter(c, typeToGenerate), test.description)
 	}
-}
-
-func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
-	tracker := newImportTracker(generators.NewPackageTypeIndex())
-	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	assert.Equal(t, "testdatac", golangNameToImportAlias(tracker, typeToGenerate.Name))
-
-	_, typeToGenerate = newTestGeneratorType(t, "c/d", "MockDeployment")
-	assert.Equal(t, "cd", golangNameToImportAlias(tracker, typeToGenerate.Name))
 }
 
 func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
@@ -192,11 +181,15 @@ func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
-	imports := g.Imports(c)
-	assert.Len(t, imports, 4) // 4 types are tagged for importing
-	assert.Contains(t, strings.Join(imports, ""), "cmeta")
-	assert.Contains(t, strings.Join(imports, ""), "cd")
-
+	// Only packages the generated body actually references are imported. The
+	// tracker used to be pre-loaded with every indexed type and relied on
+	// goimports to strip the unused ones, which also emitted a self-import.
+	for _, line := range g.Imports(c) {
+		_, path, found := strings.Cut(line, " ")
+		assert.True(t, found, line)
+		assert.NotContains(t, path, pkg.Path, "must not self-import")
+	}
+	assert.Empty(t, g.Imports(c))
 }
 
 func TestBuilderPattern_GenerateInit(t *testing.T) {

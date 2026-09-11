@@ -4,10 +4,9 @@ import (
 	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/namer"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/namer"
+	"k8s.io/gengo/v2/types"
 )
 
 type BuilderFactory interface {
@@ -16,7 +15,6 @@ type BuilderFactory interface {
 
 type PackageTypeIndex struct {
 	TypesByTypePath map[string]*types.Type
-	PackageRoot     string
 }
 
 func NewPackageTypeIndex() *PackageTypeIndex {
@@ -49,12 +47,6 @@ func WithBoilerplate(boilerplate string) func(g *Generators) {
 	}
 }
 
-func WithPackageRoot(pr string) func(g *Generators) {
-	return func(g *Generators) {
-		g.Index.PackageRoot = pr
-	}
-}
-
 func New(builderFactory BuilderFactory, opts ...func(g *Generators)) *Generators {
 	g := &Generators{
 		Boilerplate: "",
@@ -67,28 +59,25 @@ func New(builderFactory BuilderFactory, opts ...func(g *Generators)) *Generators
 	return g
 }
 
-func (g *Generators) Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
-	packages := []*types.Package{}
+func (g *Generators) Targets(context *generator.Context) []generator.Target {
+	gp := []generator.Target{}
 	for _, v := range context.Inputs {
 		pkg := context.Universe[v]
-		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
-			log.Infof("Package: %s marked for generation.", pkg.Name)
-			packages = append(packages, pkg)
-			buildPackageIndex(g.Index, pkg)
+		if !tags.IsPackageTagged(pkg.Comments) && !doPackageTypesNeedGeneration(pkg) {
+			continue
 		}
-	}
 
-	gp := generator.Packages{}
-	for _, pkg := range packages {
-		if tags.IsPackageTagged(pkg.Comments) || doPackageTypesNeedGeneration(pkg) {
-			gp = append(gp, &generator.DefaultPackage{
-				PackageName:   pkg.Name,
-				PackagePath:   pkg.Path,
-				HeaderText:    []byte(g.Boilerplate),
-				FilterFunc:    filterFuncByPackagePath(pkg),
-				GeneratorFunc: g.generatorFuncForPackage(pkg),
-			})
-		}
+		log.Infof("Package: %s marked for generation.", pkg.Name)
+		buildPackageIndex(g.Index, pkg)
+
+		gp = append(gp, &generator.SimpleTarget{
+			PkgName:        pkg.Name,
+			PkgPath:        pkg.Path,
+			PkgDir:         pkg.Dir,
+			HeaderComment:  []byte(g.Boilerplate),
+			FilterFunc:     filterFuncByPackagePath(pkg),
+			GeneratorsFunc: g.generatorFuncForPackage(pkg),
+		})
 	}
 
 	return gp

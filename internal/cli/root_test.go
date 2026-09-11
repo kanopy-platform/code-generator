@@ -3,39 +3,26 @@ package cli
 import (
 	"testing"
 
-	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/stretchr/testify/assert"
-	gengoargs "k8s.io/gengo/args"
 )
 
 func TestRootCommandGeneratorArgs(t *testing.T) {
 	tests := []struct {
 		args []string
-		want *gengoargs.GeneratorArgs
+		want *Args
 	}{
 		{
-			args: []string{"--bounding-dirs=dir", "--input-dirs=test", "--output-base=./src", "--output-package=pkg", "--output-file-base=zz-gen", "--go-header-file=myfile", "--verify-only", "--include-test-files", "--build-tag=abc", "--trim-path-prefix=src"},
-			want: func() *gengoargs.GeneratorArgs {
-				g := gengoargs.Default()
-
-				g.CustomArgs = &generators.CustomArgs{BoundingDirs: []string{"dir"}}
-				g.InputDirs = []string{"test"}
-				g.OutputBase = "./src"
-				g.OutputPackagePath = "pkg"
-				g.OutputFileBaseName = "zz-gen"
-				g.GoHeaderFilePath = "myfile"
-				g.VerifyOnly = true
-				g.IncludeTestFiles = true
-				g.GeneratedBuildTag = "abc"
-				g.TrimPathPrefix = "src"
-
-				return g
-			}(),
+			args: []string{"--input-dirs=test", "--output-file-base=zz-gen", "--build-tag=abc"},
+			want: &Args{
+				InputDirs:          []string{"test"},
+				OutputFileBaseName: "zz-gen",
+				GeneratedBuildTag:  "abc",
+			},
 		},
 	}
 
 	for _, test := range tests {
-		g := gengoargs.Default()
+		g := &Args{}
 		root := NewRootCommand(WithGeneratorArgs(g))
 
 		assert.NoError(t, root.ParseFlags(test.args))
@@ -43,5 +30,23 @@ func TestRootCommandGeneratorArgs(t *testing.T) {
 
 		assert.Equal(t, test.want, g)
 	}
+}
 
+// The flags below were removed in the gengo/v2 migration because nothing
+// consumed them. Assert they are rejected rather than silently ignored.
+func TestRootCommandRemovedFlags(t *testing.T) {
+	for _, flag := range []string{
+		"--verify-only",
+		"--include-test-files",
+		"--output-package=pkg",
+		"--trim-path-prefix=src",
+		"--go-header-file=myfile",
+		"--bounding-dirs=dir",
+		"--output-base=./src",
+	} {
+		t.Run(flag, func(t *testing.T) {
+			root := NewRootCommand(WithGeneratorArgs(&Args{}))
+			assert.Error(t, root.ParseFlags([]string{flag}))
+		})
+	}
 }
