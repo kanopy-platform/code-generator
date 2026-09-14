@@ -30,8 +30,7 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageI
 
 	return &BuilderPatternGenerator{
 		GoGenerator: generator.GoGenerator{
-			// gengo/v2 uses this verbatim as the output filename; v1 appended ".go".
-			OutputFilename: d.OutputFileBaseName + ".go",
+			OutputFilename: d.OutputFileBaseName,
 		},
 		pkgToBuild:   pkg,
 		allTypes:     isAllTypes(pkg),
