@@ -46,10 +46,8 @@ func IsMemberReadyOnly(m types.Member) bool {
 	return false
 }
 
-// tagValues returns the values of tag in comments, in the shape the
-// deprecated gengo.ExtractCommentTags used to return: the text following the
-// first "=" of each matching line, or "" for a line with no "=".
-// codetags.Extract, its replacement, returns the whole line instead.
+// tagValues returns comment tag values following the first "=" of each matching line.
+// codetags.Extract returns the whole line after the prefix.
 func tagValues(comments []string, tag string) []string {
 	lines := codetags.Extract("+", comments)[tag]
 
