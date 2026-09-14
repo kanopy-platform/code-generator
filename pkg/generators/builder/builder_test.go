@@ -176,19 +176,43 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 
 func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
+	// Index package c first so the wrapper for the d.MockSpec members resolves
+	// to c.MockSpec, a type outside of the package being generated.
+	newTestGeneratorType(t, "c", "CDeployment")
+	newTestGeneratorType(t, "c", "MockSpec")
+	pkg, typeToGenerate := newTestGeneratorType(t, "e", "EDeployment")
+	g := b.NewBuilder(pkg, defaultIndex)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+
+	// The setters reference the wrapper type from package c.
+	assert.Contains(t, buf.String(), "func (o *EDeployment) WithSpec(in *c.MockSpec) *EDeployment")
+
+	imports := g.Imports(c)
+	assert.Len(t, imports, 1)
+	assert.Contains(t, imports[0], "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/c")
+
+	// Only packages the generated body actually references are imported. The
+	// tracker used to be pre-loaded with every indexed type and relied on
+	// goimports to strip the unused ones, which also emitted a self-import.
+	for _, line := range imports {
+		alias, path, found := strings.Cut(line, " ")
+		assert.True(t, found, line)
+		assert.NotEmpty(t, alias)
+		assert.NotContains(t, path, pkg.Path+"\"", "must not self-import")
+	}
+}
+
+func TestBuilderPattern_NoImportLinesWhenBodyIsLocal(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	g := b.NewBuilder(pkg, defaultIndex)
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
-	// Only packages the generated body actually references are imported. The
-	// tracker used to be pre-loaded with every indexed type and relied on
-	// goimports to strip the unused ones, which also emitted a self-import.
-	for _, line := range g.Imports(c) {
-		_, path, found := strings.Cut(line, " ")
-		assert.True(t, found, line)
-		assert.NotContains(t, path, pkg.Path, "must not self-import")
-	}
+	// Everything CDeployment references is wrapped in its own package.
 	assert.Empty(t, g.Imports(c))
 }
 
