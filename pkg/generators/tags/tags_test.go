@@ -42,6 +42,12 @@ func TestExtractCommentTag(t *testing.T) {
 			want:        "",
 		},
 		{
+			description: "Value with surrounding whitespace",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value ")},
+			want:        "value",
+		},
+		{
 			description: "Return first value with multiple values",
 			tag:         Builder,
 			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value,value2")},

@@ -118,3 +118,10 @@ type MockBuilderFactory struct {
 func (m *MockBuilderFactory) NewBuilder(pkg *types.Package, index *PackageTypeIndex) generator.Generator {
 	return m
 }
+
+func TestCommonDir(t *testing.T) {
+	assert.Equal(t, "a/b", commonDir("", "a/b"))
+	assert.Equal(t, "a/b", commonDir("a/b", "a/b/c"))
+	assert.Equal(t, "a/b", commonDir("a/b/c", "a/b/d"))
+	assert.Equal(t, "", commonDir("a/b", "c/d"))
+}

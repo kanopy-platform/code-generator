@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"go/token"
 	"io"
 	"strings"
 
@@ -34,13 +35,64 @@ func (d *BuilderPatternGeneratorFactory) NewBuilder(pkg *types.Package, packageI
 		},
 		pkgToBuild:   pkg,
 		allTypes:     isAllTypes(pkg),
-		imports:      generator.NewImportTrackerForPackage(pkg.Path),
+		imports:      newImportTracker(pkg.Path, packageIndex.PackageRoot),
 		packageIndex: packageIndex,
 	}
 }
 
 func isAllTypes(pkg *types.Package) bool {
 	return tags.IsPackageTagged(pkg.Comments)
+}
+
+// newImportTracker returns an import tracker that aliases imports with
+// golangNameToImportAlias.
+func newImportTracker(localPkg string, packageRoot string) namer.ImportTracker {
+	tracker := namer.NewDefaultImportTracker(types.Name{Package: localPkg})
+	tracker.IsInvalidType = func(*types.Type) bool { return false }
+	tracker.LocalName = func(name types.Name) string { return golangNameToImportAlias(&tracker, packageRoot, name) }
+	tracker.PrintImport = func(path, name string) string { return name + " \"" + path + "\"" }
+
+	return &tracker
+}
+
+// golangNameToImportAlias names an import after its immediate parent directory
+// and leaf, e.g. "corev1" for "k8s.io/api/core/v1", walking further up the path
+// on collision. The package root is not part of the name, so a package being
+// generated alongside this one, "github.com/org/repo/pkg/builder/k8s" under the
+// root "github.com/org/repo/pkg/builder", is named "k8s".
+func golangNameToImportAlias(tracker namer.ImportTracker, packageRoot string, t types.Name) string {
+	dirs := strings.Split(trimPackageRoot(packageRoot, t.Package), namer.GoSeparator)
+
+	const immediateParentPosition = 2
+	for n := len(dirs) - immediateParentPosition; n >= 0; n-- {
+		name := pathToLegalGoName(strings.Join(dirs[n:], ""))
+
+		if _, found := tracker.PathOf(name); found {
+			continue
+		}
+
+		if token.Lookup(name).IsKeyword() {
+			name = "_" + name
+		}
+
+		return name
+	}
+
+	return ""
+}
+
+// trimPackageRoot replaces the package root prefix of pkg by a "." placeholder.
+// Packages outside of the root are returned unchanged.
+func trimPackageRoot(packageRoot, pkg string) string {
+	if packageRoot == "" || !strings.HasPrefix(pkg, packageRoot+namer.GoSeparator) {
+		return pkg
+	}
+
+	return "." + strings.TrimPrefix(pkg, packageRoot)
+}
+
+func pathToLegalGoName(in string) string {
+	return strings.NewReplacer("_", "", ".", "", "-", "").Replace(in)
 }
 
 func (b *BuilderPatternGenerator) Init(c *generator.Context, w io.Writer) error {

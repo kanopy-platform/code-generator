@@ -54,7 +54,7 @@ func tagValues(comments []string, tag string) []string {
 	vals := make([]string, 0, len(lines))
 	for _, line := range lines {
 		_, val, _ := strings.Cut(line, "=")
-		vals = append(vals, val)
+		vals = append(vals, strings.TrimSpace(val))
 	}
 
 	return vals

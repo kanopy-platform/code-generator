@@ -1,6 +1,9 @@
 package generators
 
 import (
+	"path"
+	"strings"
+
 	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +18,8 @@ type BuilderFactory interface {
 
 type PackageTypeIndex struct {
 	TypesByTypePath map[string]*types.Type
+	// PackageRoot is the directory the packages being generated live under.
+	PackageRoot string
 }
 
 func NewPackageTypeIndex() *PackageTypeIndex {
@@ -69,6 +74,7 @@ func (g *Generators) Targets(context *generator.Context) []generator.Target {
 
 		log.Infof("Package: %s marked for generation.", pkg.Name)
 		buildPackageIndex(g.Index, pkg)
+		g.Index.PackageRoot = commonDir(g.Index.PackageRoot, path.Dir(pkg.Path))
 
 		gp = append(gp, &generator.SimpleTarget{
 			PkgName:        pkg.Name,
@@ -81,6 +87,23 @@ func (g *Generators) Targets(context *generator.Context) []generator.Target {
 	}
 
 	return gp
+}
+
+// commonDir returns the deepest directory a and b share, or b if a is empty.
+func commonDir(a, b string) string {
+	if a == "" {
+		return b
+	}
+
+	as := strings.Split(a, namer.GoSeparator)
+	bs := strings.Split(b, namer.GoSeparator)
+
+	shared := 0
+	for shared < len(as) && shared < len(bs) && as[shared] == bs[shared] {
+		shared++
+	}
+
+	return strings.Join(as[:shared], namer.GoSeparator)
 }
 
 func filterFuncByPackagePath(pkg *types.Package) func(c *generator.Context, t *types.Type) bool {

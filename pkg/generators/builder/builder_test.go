@@ -81,6 +81,35 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 	}
 }
 
+func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
+	const root = "github.com/10gen/kanopy/pkg/builder"
+	tracker := newImportTracker(root+"/argo", root)
+
+	alias := func(pkg string) string {
+		return golangNameToImportAlias(tracker, root, types.Name{Package: pkg})
+	}
+
+	// named by parent directory and leaf
+	assert.Equal(t, "corev1", alias("k8s.io/api/core/v1"))
+	assert.Equal(t, "metav1", alias("k8s.io/apimachinery/pkg/apis/meta/v1"))
+	assert.Equal(t, "workflowv1alpha1", alias("github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"))
+
+	// the package root is dropped
+	assert.Equal(t, "k8s", alias(root+"/k8s"))
+	assert.Equal(t, "crossplane", alias(root+"/crossplane"))
+	assert.Equal(t, "crossplaneprovideraws", alias(root+"/crossplane/provideraws"))
+
+	// a collision walks further up the path
+	tracker.AddType(&types.Type{Name: types.Name{Package: "k8s.io/api/core/v1", Name: "Pod"}})
+	assert.Equal(t, "apicorev1", alias("k8s.io/api/core/v1"))
+}
+
+func TestBuilderPattern_ImportTrackerWithoutPackageRoot(t *testing.T) {
+	tracker := newImportTracker("github.com/10gen/kanopy/pkg/builder/argo", "")
+	assert.Equal(t, "buildercrossplane", golangNameToImportAlias(tracker, "",
+		types.Name{Package: "github.com/10gen/kanopy/pkg/builder/crossplane"}))
+}
+
 func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
@@ -181,6 +210,7 @@ func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	newTestGeneratorType(t, "c", "CDeployment")
 	newTestGeneratorType(t, "c", "MockSpec")
 	pkg, typeToGenerate := newTestGeneratorType(t, "e", "EDeployment")
+	defaultIndex.PackageRoot = "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata"
 	g := b.NewBuilder(pkg, defaultIndex)
 	buf := &bytes.Buffer{}
 	c := newGeneratorContext(g)
@@ -192,11 +222,11 @@ func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 
 	imports := g.Imports(c)
 	assert.Len(t, imports, 1)
-	assert.Contains(t, imports[0], "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/c")
+	// c sits directly under the package root, so it is named by its leaf
+	assert.Equal(t, `c "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/c"`, imports[0])
 
-	// Only packages the generated body actually references are imported. The
-	// tracker used to be pre-loaded with every indexed type and relied on
-	// goimports to strip the unused ones, which also emitted a self-import.
+	// Only packages the generated body references are imported, and never the
+	// package being generated.
 	for _, line := range imports {
 		alias, path, found := strings.Cut(line, " ")
 		assert.True(t, found, line)
