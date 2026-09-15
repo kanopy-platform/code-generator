@@ -82,7 +82,7 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 }
 
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
-	const root = "github.com/10gen/kanopy/pkg/builder"
+	const root = "example.com/org/repo/pkg/builder"
 	tracker := newImportTracker(root+"/argo", root)
 
 	alias := func(pkg string) string {
@@ -105,9 +105,9 @@ func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
 }
 
 func TestBuilderPattern_ImportTrackerWithoutPackageRoot(t *testing.T) {
-	tracker := newImportTracker("github.com/10gen/kanopy/pkg/builder/argo", "")
+	tracker := newImportTracker("example.com/org/repo/pkg/builder/argo", "")
 	assert.Equal(t, "buildercrossplane", golangNameToImportAlias(tracker, "",
-		types.Name{Package: "github.com/10gen/kanopy/pkg/builder/crossplane"}))
+		types.Name{Package: "example.com/org/repo/pkg/builder/crossplane"}))
 }
 
 func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
