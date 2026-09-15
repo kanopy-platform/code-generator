@@ -86,7 +86,7 @@ package mytypes
 ## Generate Enums
 
 An enum can be generated with the following argument. Enum constants are used in several upstream k8s packages.
-e.g.  
+e.g.
 
 ```golang
 // +kanopy:builder=true,ref=k8s.io/api/admissionregistration/v1.OperationType,enum=*;CREATE;UPDATE;DELETE;CONNECT
