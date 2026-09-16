@@ -3,8 +3,8 @@ package snippets
 import (
 	"fmt"
 
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/types"
 )
 
 func GenerateDeepCopy(t *types.Type) (string, generator.Args) {

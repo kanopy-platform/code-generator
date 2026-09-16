@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/gengo/v2/types"
 )
 
 func TestIncludeMember(t *testing.T) {
@@ -81,4 +82,13 @@ func TestIncludeObjectMetaMember(t *testing.T) {
 		assert.NotEmpty(t, member, test.description)
 		assert.Equal(t, test.want, includeObjectMetaMember(member), test.description)
 	}
+}
+
+func getMemberFromType(t *types.Type, name string) types.Member {
+	for _, mm := range t.Members {
+		if mm.Name == name {
+			return mm
+		}
+	}
+	return types.Member{}
 }

@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/parser"
+	"k8s.io/gengo/v2/types"
 )
 
 func TestNewGenerators(t *testing.T) {
@@ -56,12 +56,12 @@ func TestPackages_Generation(t *testing.T) {
 
 	for _, test := range tests {
 		ctx := &generator.Context{}
-		a := &args.GeneratorArgs{}
+
 		g := New(&MockBuilderFactory{})
 		if test.testInputDir != "" {
-			a, ctx = testDataGeneratorSetup(t, test.testInputDir)
+			_, ctx = testDataGeneratorSetup(t, test.testInputDir)
 		}
-		packages := g.Packages(ctx, a)
+		packages := g.Targets(ctx)
 		assert.Len(t, packages, test.want, test.description)
 	}
 }
@@ -102,23 +102,26 @@ func TestPackage_GeneratorFuncForPackage(t *testing.T) {
 	assert.Len(t, g.generatorFuncForPackage(p)(ctx), 1)
 }
 
-func testDataGeneratorSetup(t *testing.T, dir string) (*args.GeneratorArgs, *generator.Context) {
-	a := args.Default()
+func testDataGeneratorSetup(t *testing.T, dir string) (*parser.Parser, *generator.Context) {
+	p := parser.NewWithOptions(parser.Options{})
+	assert.NoError(t, p.LoadPackages(dir))
 
-	a.InputDirs = []string{dir}
-
-	b, err := a.NewBuilder()
+	ctx, err := generator.NewContext(p, NameSystems(), DefaultNameSystem)
 	assert.NoError(t, err)
-
-	ctx, err := generator.NewContext(b, NameSystems(), DefaultNameSystem)
-	assert.NoError(t, err)
-	return a, ctx
+	return p, ctx
 }
 
 type MockBuilderFactory struct {
-	generator.DefaultGen
+	generator.GoGenerator
 }
 
 func (m *MockBuilderFactory) NewBuilder(pkg *types.Package, index *PackageTypeIndex) generator.Generator {
 	return m
+}
+
+func TestCommonDir(t *testing.T) {
+	assert.Equal(t, "a/b", commonDir("", "a/b"))
+	assert.Equal(t, "a/b", commonDir("a/b", "a/b/c"))
+	assert.Equal(t, "a/b", commonDir("a/b/c", "a/b/d"))
+	assert.Equal(t, "", commonDir("a/b", "c/d"))
 }

@@ -1,8 +1,8 @@
 package snippets
 
 import (
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/types"
 )
 
 func GenerateEmptyConstructor(t *types.Type, pointerReceiver bool) (string, generator.Args) {

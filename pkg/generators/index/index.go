@@ -1,7 +1,7 @@
 package index
 
 import (
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/types"
 
 	"github.com/kanopy-platform/code-generator/pkg/generators/tags"
 	log "github.com/sirupsen/logrus"
@@ -15,7 +15,7 @@ func BuildPackageIndex(index map[string]*types.Type, pkg *types.Package) map[str
 				if m.Embedded {
 					if _, ok := index[m.Type.String()]; !ok {
 						index[m.Type.String()] = t
-						log.Debugf("Indexing %s -> (%s, %s) -- Package -> %s(%s)", m.Type.String(), m.Name, m.Type.Name, pkg.Path, pkg.SourcePath)
+						log.Debugf("Indexing %s -> (%s, %s) -- Package -> %s(%s)", m.Type.String(), m.Name, m.Type.Name, pkg.Path, pkg.Dir)
 					}
 				}
 			}

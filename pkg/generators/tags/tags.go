@@ -3,7 +3,8 @@ package tags
 import (
 	"strings"
 
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/codetags"
+	"k8s.io/gengo/v2/types"
 )
 
 const (
@@ -45,8 +46,22 @@ func IsMemberReadyOnly(m types.Member) bool {
 	return false
 }
 
+// tagValues returns comment tag values following the first "=" of each matching line.
+// codetags.Extract returns the whole line after the prefix.
+func tagValues(comments []string, tag string) []string {
+	lines := codetags.Extract("+", comments)[tag]
+
+	vals := make([]string, 0, len(lines))
+	for _, line := range lines {
+		_, val, _ := strings.Cut(line, "=")
+		vals = append(vals, strings.TrimSpace(val))
+	}
+
+	return vals
+}
+
 func Extract(comments []string, tag string) string {
-	vals := types.ExtractCommentTags("+", comments)[tag]
+	vals := tagValues(comments, tag)
 	if len(vals) == 0 {
 		return ""
 	}
@@ -55,7 +70,7 @@ func Extract(comments []string, tag string) string {
 }
 
 func ExtractArg(comments []string, tag string, arg string) string {
-	vals := types.ExtractCommentTags("+", comments)[tag]
+	vals := tagValues(comments, tag)
 	if len(vals) == 0 {
 		return ""
 	}

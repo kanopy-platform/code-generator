@@ -5,7 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func main(){
+func main() {
 	if err := cli.NewRootCommand().Execute(); err != nil {
 		log.Fatal(err)
 	}

@@ -3,30 +3,28 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/kanopy-platform/code-generator/pkg/generators"
 	"github.com/kanopy-platform/code-generator/pkg/generators/index"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/parser"
+	"k8s.io/gengo/v2/types"
 )
 
 var defaultIndex = generators.NewPackageTypeIndex()
 
 func newTestGeneratorType(t *testing.T, dir string, selector string) (*types.Package, *types.Type) {
 	testDir := fmt.Sprintf("./testdata/%s", dir)
-	d := args.Default()
-	d.IncludeTestFiles = true
-	d.InputDirs = []string{testDir + ""}
-	d.GoHeaderFilePath = filepath.Join(args.DefaultSourceTree())
-	b, err := d.NewBuilder()
+	p := parser.NewWithOptions(parser.Options{})
+	paths, err := p.FindPackages(testDir)
 	assert.NoError(t, err)
-	findTypes, err := b.FindTypes()
+	assert.NoError(t, p.LoadPackages(testDir))
+	findTypes, err := p.NewUniverse()
 	assert.NoError(t, err)
+	testDir = paths[0]
 	pkg := findTypes[testDir]
 	assert.NotNil(t, pkg)
 
@@ -84,12 +82,32 @@ func TestBuilderPatternGenerator_Filter(t *testing.T) {
 }
 
 func TestBuilderPattern_ImportTrackerToAliasNames(t *testing.T) {
-	tracker := newImportTracker(generators.NewPackageTypeIndex())
-	_, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
-	assert.Equal(t, "testdatac", golangNameToImportAlias(tracker, typeToGenerate.Name))
+	const root = "example.com/org/repo/pkg/builder"
+	tracker := newImportTracker(root+"/argo", root)
 
-	_, typeToGenerate = newTestGeneratorType(t, "c/d", "MockDeployment")
-	assert.Equal(t, "cd", golangNameToImportAlias(tracker, typeToGenerate.Name))
+	alias := func(pkg string) string {
+		return golangNameToImportAlias(tracker, root, types.Name{Package: pkg})
+	}
+
+	// named by parent directory and leaf
+	assert.Equal(t, "corev1", alias("k8s.io/api/core/v1"))
+	assert.Equal(t, "metav1", alias("k8s.io/apimachinery/pkg/apis/meta/v1"))
+	assert.Equal(t, "workflowv1alpha1", alias("github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"))
+
+	// the package root is dropped
+	assert.Equal(t, "k8s", alias(root+"/k8s"))
+	assert.Equal(t, "crossplane", alias(root+"/crossplane"))
+	assert.Equal(t, "crossplaneprovideraws", alias(root+"/crossplane/provideraws"))
+
+	// a collision walks further up the path
+	tracker.AddType(&types.Type{Name: types.Name{Package: "k8s.io/api/core/v1", Name: "Pod"}})
+	assert.Equal(t, "apicorev1", alias("k8s.io/api/core/v1"))
+}
+
+func TestBuilderPattern_ImportTrackerWithoutPackageRoot(t *testing.T) {
+	tracker := newImportTracker("example.com/org/repo/pkg/builder/argo", "")
+	assert.Equal(t, "buildercrossplane", golangNameToImportAlias(tracker, "",
+		types.Name{Package: "example.com/org/repo/pkg/builder/crossplane"}))
 }
 
 func TestBuilderPattern_ObjectMetaGeneratesSnippets(t *testing.T) {
@@ -187,16 +205,45 @@ func TestBuilderPattern_GenerateSettersForType(t *testing.T) {
 
 func TestBuilderPattern_ObjectMetaGeneratesImportLines(t *testing.T) {
 	b := &BuilderPatternGeneratorFactory{}
+	// Index package c first so the wrapper for the d.MockSpec members resolves
+	// to c.MockSpec, a type outside of the package being generated.
+	newTestGeneratorType(t, "c", "CDeployment")
+	newTestGeneratorType(t, "c", "MockSpec")
+	pkg, typeToGenerate := newTestGeneratorType(t, "e", "EDeployment")
+	defaultIndex.PackageRoot = "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata"
+	g := b.NewBuilder(pkg, defaultIndex)
+	buf := &bytes.Buffer{}
+	c := newGeneratorContext(g)
+	assert.True(t, g.Filter(c, typeToGenerate))
+	assert.NoError(t, g.GenerateType(c, typeToGenerate, buf))
+
+	// The setters reference the wrapper type from package c.
+	assert.Contains(t, buf.String(), "func (o *EDeployment) WithSpec(in *c.MockSpec) *EDeployment")
+
+	imports := g.Imports(c)
+	assert.Len(t, imports, 1)
+	// c sits directly under the package root, so it is named by its leaf
+	assert.Equal(t, `c "github.com/kanopy-platform/code-generator/pkg/generators/builder/testdata/c"`, imports[0])
+
+	// Only packages the generated body references are imported, and never the
+	// package being generated.
+	for _, line := range imports {
+		alias, path, found := strings.Cut(line, " ")
+		assert.True(t, found, line)
+		assert.NotEmpty(t, alias)
+		assert.NotContains(t, path, pkg.Path+"\"", "must not self-import")
+	}
+}
+
+func TestBuilderPattern_NoImportLinesWhenBodyIsLocal(t *testing.T) {
+	b := &BuilderPatternGeneratorFactory{}
 	pkg, typeToGenerate := newTestGeneratorType(t, "c", "CDeployment")
 	g := b.NewBuilder(pkg, defaultIndex)
 	c := newGeneratorContext(g)
 	assert.NoError(t, g.GenerateType(c, typeToGenerate, &bytes.Buffer{}))
 
-	imports := g.Imports(c)
-	assert.Len(t, imports, 4) // 4 types are tagged for importing
-	assert.Contains(t, strings.Join(imports, ""), "cmeta")
-	assert.Contains(t, strings.Join(imports, ""), "cd")
-
+	// Everything CDeployment references is wrapped in its own package.
+	assert.Empty(t, g.Imports(c))
 }
 
 func TestBuilderPattern_GenerateInit(t *testing.T) {

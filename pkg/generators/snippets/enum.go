@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"k8s.io/gengo/generator"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/generator"
+	"k8s.io/gengo/v2/types"
 )
 
 const allValue = "*"

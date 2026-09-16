@@ -2,12 +2,11 @@ package tags
 
 import (
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/gengo/args"
-	"k8s.io/gengo/types"
+	"k8s.io/gengo/v2/parser"
+	"k8s.io/gengo/v2/types"
 )
 
 func TestExtractCommentTag(t *testing.T) {
@@ -41,6 +40,12 @@ func TestExtractCommentTag(t *testing.T) {
 			tag:         Builder,
 			comments:    []string{fmt.Sprintf(fmtTag, Builder, "")},
 			want:        "",
+		},
+		{
+			description: "Value with surrounding whitespace",
+			tag:         Builder,
+			comments:    []string{fmt.Sprintf(fmtTag, Builder, "value ")},
+			want:        "value",
 		},
 		{
 			description: "Return first value with multiple values",
@@ -158,14 +163,13 @@ func TestMemberReadyOnly(t *testing.T) {
 
 func getTestPackage(t *testing.T) *types.Package {
 	testDir := "./testdata/a"
-	d := args.Default()
-	d.IncludeTestFiles = true
-	d.InputDirs = []string{testDir + ""}
-	d.GoHeaderFilePath = filepath.Join(args.DefaultSourceTree())
-	b, err := d.NewBuilder()
+	p := parser.NewWithOptions(parser.Options{})
+	paths, err := p.FindPackages(testDir)
 	assert.NoError(t, err)
-	findTypes, err := b.FindTypes()
+	assert.NoError(t, p.LoadPackages(testDir))
+	findTypes, err := p.NewUniverse()
 	assert.NoError(t, err)
+	testDir = paths[0]
 	return findTypes[testDir]
 }
 
